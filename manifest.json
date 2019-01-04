@@ -1,0 +1,18 @@
+﻿{
+	"name": "FlashVim",
+	"version": "1.0.0",
+	"manifest_version": 2,
+	"description":"Vim for Google Chrome and Firefox.",
+	"icons": {"48": "source/48.png"},
+
+	"permissions": [ "contextMenus", "cookies", "tabs", "\u003Call_urls>", "activeTab"],
+	"background": {"scripts": ["background.js"]},
+
+	"content_scripts": [{
+        "all_frames": true,
+        "matches": [ "\u003Call_urls>" ],
+		"js": ["content.js"],
+		"run_at":"document_start",
+		"css": ["source/mkstyles.css"]
+	}]
+}

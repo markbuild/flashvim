@@ -1,0 +1,28 @@
+#bottompanel{bottom:15px;right:15px;z-index: 2147483647;position: fixed;display:none}
+#bp_info{padding:0 10px;color:#fff;background:#0000BF;font-size:72px;font-family:Arial,Helvetica,sans-serif;line-height:72px;height: 82px;border:2px solid #e2e2e2}
+span.mk_vim_label{/*!important:top priority*/
+    box-sizing: border-box !important;
+    z-index:2147483647 !important;
+	position: absolute !important; 
+	text-indent: 0 !important;
+	padding: 2px 4px !important; 
+    letter-spacing: 0 !important;
+	line-height: 12px !important; 
+	font-size: 12px !important;
+    height: 15px !important;
+    font-family: monospace !important;
+    line-height: 8px !important;
+    border-radius: 4px !important;
+    background: #FFEB3B !important;
+    color: black !important;
+	border: 1px solid black !important; 
+    text-shadow: none !important;
+    font-weight: bold !important;
+    text-align: center !important;
+}
+a span.mk_vim_label{
+    background:red !important;
+    text-shadow: 1px 1px 0px #333 !important;
+	color: #fff !important;
+	border: 1px solid #fff !important; 
+} 
