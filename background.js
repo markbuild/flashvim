@@ -1,43 +1,54 @@
+if(!locache.get('linkmap')) { // Init Setting
+    locache.set('linkmap', {"wiki":"https://wiki.markbuild.com/doku.php?id=start","gh":"https://github.com","gg":"https://www.google.com/","fv":"https://github.com/markbuild/flashvim"}, 3600*24*3650);//10 years 
+}
 chrome.runtime.onMessage.addListener((request,sender,sendResponse) => {
-    /***
-      +++++++++++++++++++++++++++
-      +++    for vim style gt     +++
-      +++++++++++++++++++++++++++
-      */
-    if(request.cmd=='removecurrenttab'){
-        chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-            const current = tabs[0]
-            //alert(current.id)
-            //alert(current.index)
-            chrome.tabs.remove(current.id);//Remove current tab
-        });
-    } else if(request.cmd=='changetab'){
-        updateAllTabs();
-        var _index,_num,_direction;
-        if(request.num){ 
-            _num = request.num; 
-        } else if(request.direction){ 
-            _direction= request.direction;
-        }
-        chrome.tabs.query({active: true,currentWindow: true}, (tabs) => {
-            var current = tabs[0],
-                tabId = current.id,
-                currentIndex = current.index;
-            chrome.tabs.query({currentWindow: true}, (tabs) => {
-                if(_num) 
-                    _index = _num-1;
-                else
-                    _index = (currentIndex+_direction) % tabs.length;
-                chrome.tabs.query({index: _index}, function(tabs){
-                    if (tabs.length) {
-                        var tabToActivate = tabs[0],
-                            tabToActivate_Id = tabToActivate.id;
-                        chrome.tabs.update(tabToActivate_Id, {active: true});
-                    }
+    switch(request.type) {
+        case 'removecurrenttab':
+            chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+                const current = tabs[0]
+                //alert(current.id)
+                //alert(current.index)
+                chrome.tabs.remove(current.id);//Remove current tab
+            });
+            break;
+        case 'changetab':
+            updateAllTabs();
+            var _index,_num,_direction;
+            if(request.num){ 
+                _num = request.num; 
+            } else if(request.direction){ 
+                _direction= request.direction;
+            }
+            chrome.tabs.query({active: true,currentWindow: true}, (tabs) => {
+                var current = tabs[0],
+                    tabId = current.id,
+                    currentIndex = current.index;
+                chrome.tabs.query({currentWindow: true}, (tabs) => {
+                    if(_num) 
+                        _index = _num-1;
+                    else
+                        _index = (currentIndex+_direction) % tabs.length;
+                    chrome.tabs.query({index: _index}, function(tabs){
+                        if (tabs.length) {
+                            var tabToActivate = tabs[0],
+                                tabToActivate_Id = tabToActivate.id;
+                            chrome.tabs.update(tabToActivate_Id, {active: true});
+                        }
+                    });
                 });
             });
-        });
-    };
+            break;
+        case 'getlink':
+            sendResponse(locache.get('linkmap')[request.cmd]);
+            break;
+        case 'getlinkmap':
+            sendResponse(locache.get('linkmap'));
+            break;
+        case 'setlinkmap':
+            console.log(request.linkmap);
+            locache.set('linkmap', request.linkmap, 3600*24*3650); // 10 years 
+            break;
+    }
 });
 /***
   ++++++++++++++++++++++++++++++++

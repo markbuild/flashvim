@@ -86,7 +86,7 @@ const keydownHandler = (event) => {
         case 110:cmd+='.';break;
         case 111:cmd+='/';break;//numpad /
         // Delete last char
-        case 8://Backspace
+        case 8://Backspace  Delete in MacBook
         case 46:if(cmd.length>0) {event.preventDefault();cmd=cmd.substring(0,cmd.length-1)} break;//Delete
         case 13:cmd='';break;//Enter
         case 48:Shift?cmd+=')':cmd+='0';break;
@@ -100,12 +100,12 @@ const keydownHandler = (event) => {
         case 56:Shift?cmd+='*':cmd+='8';break;
         case 57:Shift?cmd+='(':cmd+='9';break;
         case 59: // Firefox
-        case 186:Shift?cmd+=':':cmd+=';';break;// Chrome
+        case 186:Shift?cmd+=':':cmd+=';';break; // Chrome
         case 61: // Firefox 
-        case 187:Shift?cmd+='+':cmd+='=';break;
+        case 187:Shift?cmd+='+':cmd+='=';break; // Chrome
         case 188:Shift?cmd+='<':cmd+=',';break;
         case 173: // Firefox 
-        case 189:Shift?cmd+='_':cmd+='-';break;
+        case 189:Shift?cmd+='_':cmd+='-';break; // Chrome
         case 190:Shift?cmd+='>':cmd+='.';break;
         case 191:Shift?cmd+='?':cmd+='/';break;
         //case 192:Shift?cmd+='~':cmd+='`';break;
@@ -131,8 +131,6 @@ const keydownHandler = (event) => {
                 $id('kw').focus();$id('kw').style.color=randomcolor();$id('kw').style.background="#000";$id('kw').style.borderRadius="2px";$id('kw').style.padding="0 3px";
             } else if(location.href.match(/doku\./)){
                 $id('qsearch__in').focus();$id('qsearch__in').style.color=randomcolor();$id('qsearch__in').style.background="#000";
-            } else if(location.host.match(/github\.com/)){
-                document.forms[0].q.focus();document.forms[0].q.style.color=randomcolor();document.forms[0].q.style.background="#000";
             } else if(location.host.match(/bing\.com/)){
                 $id('sb_form_q').focus();$id('sb_form_q').style.color=randomcolor();$id('sb_form_q').style.background="#000";$id('sb_form_q').style.borderRadius="4px";$id('sb_form_q').style.padding="0 3px";
             } else {
@@ -154,7 +152,7 @@ const keydownHandler = (event) => {
             location.reload();break;
         case ':q': // Quit this tab,close tab
         case ';q': // Fault tolerance 
-            chrome.runtime.sendMessage({cmd:'removecurrenttab'});break;
+            chrome.runtime.sendMessage({type:'removecurrenttab'});break;
         case ":sav": 
                if(location.pathname.match(/doku\.php/)){ // work for dokuwiki
                    $id("edbtn__save").click();
@@ -176,9 +174,9 @@ const keydownHandler = (event) => {
         case 'gg'://Scroll to Top
                window.scrollTo(0,0);cmd='';break;
         case 'gt': // Go to next tab
-               chrome.runtime.sendMessage({cmd:'changetab',direction:1});cmd='';break;
+               chrome.runtime.sendMessage({type:'changetab',direction:1});cmd='';break;
         case 'gT': // Go to previous tab
-               chrome.runtime.sendMessage({cmd:'changetab',direction:-1});cmd='';break;
+               chrome.runtime.sendMessage({type:'changetab',direction:-1});cmd='';break;
         case 'G': // Scroll to Bottom
                window.scrollTo(0,document.body.scrollHeight);cmd='';break;
         case 'l':// Hide or Show labels
@@ -216,13 +214,19 @@ const keydownHandler = (event) => {
         case 'x':
                try{document.getSelection().anchorNode.parentNode.innerHTML=document.getSelection().anchorNode.textContent.replace(document.getSelection().toString(),"");} catch(err){} cmd=''; break;
     }
-    if(cmd.match(/^\d+gt$/)){//Go to tab in position \d
-        chrome.runtime.sendMessage({cmd:'changetab',num:cmd.slice(0,-2)});
+    if(cmd.match(/^\.\w+\.$/)) { //If match /string..
+        chrome.runtime.sendMessage({type:'getlink',cmd:cmd.slice(1,-1)},function (response) {
+            console.log('content get response:',response);
+            response != null ? open(response) : 0;
+            cmd ='';
+        });
+    } else if(cmd.match(/^\d+gt$/)){//Go to tab in position \d
+        chrome.runtime.sendMessage({type:'changetab',num:cmd.slice(0,-2)});
         cmd='';
     } else if(cmd.match(/^\d+r$/)){// [r]edirect to the link by label id 
         window.location.href=$id('mk_label'+cmd.slice(0,-1)).parentElement.href;
         cmd='';
-    } else if(cmd.match(/^\d+o$/)){// [o]pen the link in new tab by label id
+    } else if(cmd.match(/^\d+n$/)){// [o]pen a link in a new tab by label id
         open($id('mk_label'+cmd.slice(0,-1)).parentElement.href);
         $id('mk_label'+cmd.slice(0,-1)).style.opacity=0;//Hide aim label
         cmd='';
@@ -233,7 +237,7 @@ const keydownHandler = (event) => {
         $id('mk_label'+cmd.slice(0,-1)).nextElementSibling.focus();
         $id('mk_label'+cmd.slice(0,-1)).style.opacity=0;//Hide aim label
         cmd='';
-    } else if(cmd.match(/^>[a-z0-9-\.]+\.(com|io|us|cn|jp|de|fr|ru|local)$/)){
+    } else if(cmd.match(/^+[a-z0-9-\.]+\.(com|io|us|cn|jp|de|fr|ru|local)$/)){
         open('http://'+cmd.slice(1));
         cmd='';
     } else if(cmd.match(/^=[a-z0-9-\.]+\.(com|io|us|cn|jp|de|fr|ru|local)$/)){
