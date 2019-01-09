@@ -1,6 +1,18 @@
 if(!locache.get('linkmap')) { // Init Setting
-    locache.set('linkmap', {"wiki":"https://wiki.markbuild.com/doku.php?id=start","gh":"https://github.com","gg":"https://www.google.com/","fv":"https://github.com/markbuild/flashvim"}, 3600*24*3650);//10 years 
+    locache.set('linkmap', {
+        "gh":"https://github.com",
+        "lorem":"http://lipsum.com/",
+        "json":"https://jsonlint.com/",
+        "ptm":"https://mail.protonmail.com/",
+        "favicon":"https://www.favicon-generator.org/",
+        "gg":"https://www.google.com/",
+        "tt":"https://twitter.com/",
+        "fv":"https://github.com/markbuild/flashvim"
+    }, 3600*24*3650);//10 years 
 }
+if(navigator.userAgent.includes("Firefox")) {
+    chrome = browser;
+} 
 chrome.runtime.onMessage.addListener((request,sender,sendResponse) => {
     switch(request.type) {
         case 'removecurrenttab':
@@ -100,12 +112,11 @@ const updateAllTabs = () => {
 }
 chrome.tabs.onCreated.addListener((Id) => {
     updateAllTabs();
-    updateFlag(Id);
 });
 chrome.tabs.onUpdated.addListener((Id, changeInfo, tab) => {
     updateAllTabs();
 });
-chrome.tabs.onSelectionChanged.addListener((Id) => {
+chrome.tabs.onActivated.addListener((Id) => {
     updateAllTabs();
 });
 chrome.tabs.onMoved.addListener((Id) => {

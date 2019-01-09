@@ -1,7 +1,12 @@
+const mlog = (_info) => {console.log('%c'+_info,"color:#fff;background-image:-webkit-gradient(linear, 0% 0%, 100% 100%, from(#3E6CD0), to(#C93856));border-radius:2px;padding:2px;font-weight:bold")}
+if(navigator.userAgent.includes("Firefox")) {
+    mlog('FlashVim in Firefox!');
+    chrome = browser;
+} else {
+    mlog('FlashVim in Chrome!');
+}
 /***+++++++++++++++++++ Event Listener ++++++++++++++++++++++++++++***/
-document.addEventListener("DOMContentLoaded", () => { 
-    createInfoPanel();
-});
+document.addEventListener("DOMContentLoaded", () => { createInfoPanel()});
 document.addEventListener('keydown', (event) => {keydownHandler(event)}, false );
 document.addEventListener('keyup', (event) => {keyupHandler(event)}, false );
 /***+++++++++++++++++++ Event Processor ++++++++++++++++++++++++++++***/
@@ -12,12 +17,6 @@ const createInfoPanel = () => {
     if(document.body == null) return false;
     var first=document.body.firstChild;
     document.body.insertBefore(bottomPanel,first);
-    if(navigator.userAgent.includes("Firefox")) {
-        mlog('FlashVim in Firefox!');
-        chrome = browser;
-    } else {
-        mlog('FlashVim in Chrome!');
-    }
 };
 var cmd=''; // Command will display on Control Panel
 var insert_mode = false;
@@ -149,6 +148,7 @@ const keydownHandler = (event) => {
         case ':tf'://Google Translate:to French 
                location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=fr&text='+$id('source').value;cmd='';break;
         case ':e': // Reload the page
+        case ';e': // Fault tolerance 
             location.reload();break;
         case ':q': // Quit this tab,close tab
         case ';q': // Fault tolerance 
@@ -237,7 +237,7 @@ const keydownHandler = (event) => {
         $id('mk_label'+cmd.slice(0,-1)).nextElementSibling.focus();
         $id('mk_label'+cmd.slice(0,-1)).style.opacity=0;//Hide aim label
         cmd='';
-    } else if(cmd.match(/^+[a-z0-9-\.]+\.(com|io|us|cn|jp|de|fr|ru|local)$/)){
+    } else if(cmd.match(/^\+[a-z0-9-\.]+\.(com|io|us|cn|jp|de|fr|ru|local)$/)){
         open('http://'+cmd.slice(1));
         cmd='';
     } else if(cmd.match(/^=[a-z0-9-\.]+\.(com|io|us|cn|jp|de|fr|ru|local)$/)){
@@ -251,7 +251,6 @@ const keydownHandler = (event) => {
 const $id = (elem) => document.getElementById(elem);
 const $tag = (elem) => document.getElementsByTagName(elem);
 const randomcolor = () => ['#f44336','#db43f5','#8549ef','#2196f3','#00bcd4','#21ccbc','#8bc34a','#ffeb3b','#ff9800','#ccc'][Math.ceil(Math.random()*11)-1];
-const mlog = (_info) => {console.log('%c'+_info,"color:#fff;background-image:-webkit-gradient(linear, 0% 0%, 100% 100%, from(#3E6CD0), to(#C93856));border-radius:2px;padding:2px;font-weight:bold")}
 const updateInfoPanel = (data) => {$id('bottompanel').style.display=data?'block':'none'; $id('bp_info').innerHTML=data }
 
 /* Get all the big images */

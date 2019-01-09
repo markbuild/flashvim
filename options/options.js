@@ -6,18 +6,21 @@ chrome.runtime.sendMessage({type:'getlinkmap'},function (response) {
     render_link_map_table();
 });
 
-document.getElementById("uploadbackupfile").addEventListener('change', (event) => {loadfile(event.target)}, false );
-
 document.getElementById("add_new_map").addEventListener('click', (event) => { add_new_map() }, false );
 document.getElementById("save_linkmap").addEventListener('click', (event) => { save_linkmap() }, false );
+document.getElementById("reset_linkmap").addEventListener('click', (event) => { reset_linkmap() }, false );
+document.getElementById("uploadbackupfile").addEventListener('change', (event) => {loadfile(event.target)}, false );
 
 const render_link_map_table = () => {
     var html='<tr><th>Key</th><th>Link</th></tr>';
     Object.keys(linkmap).sort().forEach(function(key) {
-        html+='<tr><td class="key"><input value="'+key+'" /></td><td class="link"><input value="'+linkmap[key]+'" /></td></tr>';
+        html+='<tr><td class="key"><input value="'+key+'" /></td><td class="link"><input value="'+linkmap[key]+'" /></td><td><button class="remove">x</button></td></tr>';
     });
 
-    document.getElementById("linkmaptable").innerHTML=html;
+    document.getElementById("linkmapedit").innerHTML=html;
+    for(let i = 0; i < document.getElementsByClassName("remove").length; i++){
+        document.getElementsByClassName("remove")[i].addEventListener('click', (event) => { removecurrentline(event) }, false );
+    }
     update_backup_link();
 };
 
@@ -42,11 +45,24 @@ const loadfile = (event_this) => {
 };
 
 const add_new_map = () => {
-    document.getElementById("linkmaptable").innerHTML+='<tr class="new"><td class="key"><input></td><td class="link"><input></td></tr>';
+    let tr = document.createElement('tr')
+    tr.className="new"
+    tr.innerHTML+='<td class="key"><input></td><td class="link"><input></td><td><button class="remove">x</button></td>';
+    document.getElementById("linkmapedit").appendChild(tr);
+    for(let i = 0; i < document.getElementsByClassName("remove").length; i++){
+        document.getElementsByClassName("remove")[i].addEventListener('click', (event) => { removecurrentline(event) }, false );
+    }
 };
 
+const removecurrentline = (event) => {
+    event.target.parentElement.parentElement.remove();
+};
+
+const reset_linkmap = () => {
+    render_link_map_table();
+}
 const save_linkmap = () => {
-    var elems = document.getElementById("linkmaptable").getElementsByTagName("input");
+    var elems = document.getElementById("linkmapedit").getElementsByTagName("input");
     var arr={}
     for(var i=0;i< elems.length;i++){
         var value= elems[i].value;

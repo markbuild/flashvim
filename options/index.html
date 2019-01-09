@@ -8,21 +8,25 @@ input{border: 1px solid #000;padding:2px 5px;font-size:12px}
 .link input{width: 500px;}
 .key input{}
 .new input{border: 1px solid darkred;}
+tr button{color:red;cursor:pointer}
 </style>
 </head>
 <body>
 <h1>FlashVim Options</h1>
 <div>
 <h2>Map an individual key to open a link</h2>
-<table id="linkmaptable">
+<table>
+    <tbody id="linkmapedit">
+    </tbody>
 </table>
 <button id="add_new_map">+ Add New</button>
 <button id="save_linkmap">Save</button>
+<button id="reset_linkmap">Reset</button>
 <h2>Backup and Restore</h2>
 
 <h3>Backup</h3>
 
-<p>Click to backup your settings, or right-click and select Save As.</p>
+<p>Click to backup your settings, or right-click and select Save link as.</p>
 
 <a id="downloadbackup" href="">Click to download backup</a>
 
