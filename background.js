@@ -1,5 +1,5 @@
-if(!locache.get('linkmap')) { // Init Setting
-    locache.set('linkmap', {
+if(!localStorage.getItem('linkmap')) { // Init Setting
+    localStorage.setItem('linkmap', JSON.stringify({
         "gh":"https://github.com",
         "lorem":"http://lipsum.com/",
         "json":"https://jsonlint.com/",
@@ -8,7 +8,7 @@ if(!locache.get('linkmap')) { // Init Setting
         "gg":"https://www.google.com/",
         "tt":"https://twitter.com/",
         "fv":"https://github.com/markbuild/flashvim"
-    }, 3600*24*3650);//10 years 
+    }));
 }
 if(navigator.userAgent.includes("Firefox")) {
     chrome = browser;
@@ -51,14 +51,14 @@ chrome.runtime.onMessage.addListener((request,sender,sendResponse) => {
             });
             break;
         case 'getlink':
-            sendResponse(locache.get('linkmap')[request.cmd]);
+            sendResponse(JSON.parse(localStorage.getItem('linkmap'))[request.cmd]);
             break;
         case 'getlinkmap':
-            sendResponse(locache.get('linkmap'));
+            sendResponse(JSON.parse(localStorage.getItem('linkmap')));
             break;
         case 'setlinkmap':
-            console.log(request.linkmap);
-            locache.set('linkmap', request.linkmap, 3600*24*3650); // 10 years 
+            localStorage.setItem('linkmap', JSON.stringify(request.linkmap));
+            sendResponse(JSON.parse(localStorage.getItem('linkmap')));
             break;
     }
 });
@@ -68,9 +68,10 @@ chrome.runtime.onMessage.addListener((request,sender,sendResponse) => {
   ++++++++++++++++++++++++++++++++
   */
 const updatetab = (details) => {
-    if(details.url.startsWith('chrome://')) return;
-    if(details.url.startsWith('about:')) return;
-    if(details.url.startsWith('file:///')) return;
+    if(details.url.startsWith('about')) return;
+    if(details.url.startsWith('moz')) return;
+    if(details.url.startsWith('chrome')) return;
+    if(details.url.startsWith('file')) return;
     var id = details.id
         ,index = details.index
         ,title = details.title;

@@ -1,7 +1,6 @@
 var linkmap = {};
 
 chrome.runtime.sendMessage({type:'getlinkmap'},function (response) {
-    console.log(response);
     linkmap = response;
     render_link_map_table();
 });
@@ -39,6 +38,8 @@ const loadfile = (event_this) => {
     reader.onload = function() {
         var options = JSON.parse(reader.result); 
         chrome.runtime.sendMessage({type:'setlinkmap',linkmap:options.linkmap},function (response) {
+            linkmap = response;
+            render_link_map_table();
         });
     };
     reader.readAsBinaryString(file);
