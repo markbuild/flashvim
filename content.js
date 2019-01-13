@@ -6,7 +6,7 @@ if(navigator.userAgent.includes("Firefox")) {
     mlog('FlashVim in Chrome!');
 }
 /***+++++++++++++++++++ Event Listener ++++++++++++++++++++++++++++***/
-document.addEventListener("DOMContentLoaded", () => { createInfoPanel()});
+document.addEventListener("DOMContentLoaded", () => { createInfoPanel(); ["keydown"].forEach(evt => document.removeEventListener(evt, this.doThing)); });
 document.addEventListener('keydown', (event) => {keydownHandler(event)}, false );
 document.addEventListener('keyup', (event) => {keyupHandler(event)}, false );
 /***+++++++++++++++++++ Event Processor ++++++++++++++++++++++++++++***/
