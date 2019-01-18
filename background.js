@@ -68,10 +68,8 @@ chrome.runtime.onMessage.addListener((request,sender,sendResponse) => {
   ++++++++++++++++++++++++++++++++
   */
 const updatetab = (details) => {
-    if(details.url.startsWith('about')) return;
-    if(details.url.startsWith('moz')) return;
-    if(details.url.startsWith('chrome')) return;
-    if(details.url.startsWith('file')) return;
+    if(!details.url) return
+    if(!details.url.startsWith('http') && !details.url.startsWith('file')) return;
     var id = details.id
         ,index = details.index
         ,title = details.title;
@@ -82,11 +80,7 @@ const updatetab = (details) => {
         title = title.substr(5);
     }
     title = transformnumber(index + 1) + ' - ' + title;
-    try {
-        chrome.tabs.executeScript(id, {code : "document.title = '" + title + "';"});
-    } catch(e) {
-        alert(e);
-    }
+    chrome.tabs.executeScript(id, {code : "document.title = '" + title + "';"}, _=>{ let e = chrome.runtime.lastError; if(e !== undefined) console.log(id, e) });
 };
 const transformnumber = (n) => {
     switch (n){
@@ -105,8 +99,8 @@ const transformnumber = (n) => {
 }
 const updateAllTabs = () => {
     chrome.tabs.query({}, (tabs) => {
-        for (var i = 0, tab; tab = tabs[i]; i++) {
-            updatetab(tab);
+        for (var i = 0; i < tabs.length; i++) {
+            updatetab(tabs[i]);
         }
     });
     return true;

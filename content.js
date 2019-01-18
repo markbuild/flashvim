@@ -6,11 +6,14 @@ if(navigator.userAgent.includes("Firefox")) {
     mlog('FlashVim in Chrome!');
 }
 /***+++++++++++++++++++ Event Listener ++++++++++++++++++++++++++++***/
-document.addEventListener("DOMContentLoaded", () => { createInfoPanel(); ["keydown"].forEach(evt => document.removeEventListener(evt, this.doThing)); });
+document.addEventListener("DOMContentLoaded", () => { webinit()});
 document.addEventListener('keydown', (event) => {keydownHandler(event)}, false );
 document.addEventListener('keyup', (event) => {keyupHandler(event)}, false );
 /***+++++++++++++++++++ Event Processor ++++++++++++++++++++++++++++***/
-const createInfoPanel = () => {
+const webinit = () => {
+    if(location.hostname == "www.bing.com" && location.pathname == "/") {
+        document.body.innerHTML = document.body.innerHTML;
+    }
     const bottomPanel= document.createElement("div");
     bottomPanel.id='bottompanel';
     bottomPanel.innerHTML='<div id="bp_info"></div>';
@@ -30,16 +33,16 @@ const keyupHandler = (event) => {
     if(event.keyCode == 16) {
         Shift = false;
     }
-}
-const keydownHandler = (event) => {
-    clearTimeout(tid);
-    if(event.keyCode==27){ // ESC
+    if(event.keyCode == 27){ // ESC
         cmd='';
         updateInfoPanel('');
         insert_mode = false;
         event.target.blur();
-        document.onblur();
+        document.body.blur();
     }
+}
+const keydownHandler = (event) => {
+    clearTimeout(tid);
     if(insert_mode) {
         updateInfoPanel('<span style="color:#FFEB3B">-- INSERT --</span>');
         return; 
@@ -140,13 +143,33 @@ const keydownHandler = (event) => {
         case ':date':
             cmd='';updateInfoPanel(new Date()).toString().slice(0,24);break;
         case ':tc'://Google Translate:to Chinese
-               location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=zh-CN&text='+$id('source').value;cmd='';break;
+            if(location.host.startsWith('translate.google.com')) {
+               location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=zh-CN&text='+$id('source').value;
+            } else if(location.href.startsWith('http')) {
+                open('https://translate.google.com/translate?sl=auto&tl=zh-CN&u='+location.href);
+            }
+            cmd='';break;
         case ':td'://Google Translate:to German 
-               location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=de&text='+$id('source').value;cmd='';break;
+            if(location.host.startsWith('translate.google.com')) {
+               location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=de&text='+$id('source').value;
+            } else if(location.href.startsWith('http')) {
+                open('https://translate.google.com/translate?sl=auto&tl=de&u='+location.href);
+            }
+            cmd='';break;
         case ':te'://Google Translate:to English
-               location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=en&text='+$id('source').value;cmd='';break;
+            if(location.host.startsWith('translate.google.com')) {
+               location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=en&text='+$id('source').value;
+            } else if(location.href.startsWith('http')) {
+                open('https://translate.google.com/translate?sl=auto&tl=en&u='+location.href);
+            }
+            cmd='';break;
         case ':tf'://Google Translate:to French 
-               location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=fr&text='+$id('source').value;cmd='';break;
+            if(location.host.startsWith('translate.google.com')) {
+               location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=fr&text='+$id('source').value;
+            } else if(location.href.startsWith('http')) {
+                open('https://translate.google.com/translate?sl=auto&tl=fr&u='+location.href);
+            }
+            cmd='';break;
         case ':e': // Reload the page
         case ';e': // Fault tolerance 
             location.reload();break;
@@ -251,7 +274,7 @@ const keydownHandler = (event) => {
 const $id = (elem) => document.getElementById(elem);
 const $tag = (elem) => document.getElementsByTagName(elem);
 const randomcolor = () => ['#f44336','#db43f5','#8549ef','#2196f3','#00bcd4','#21ccbc','#8bc34a','#ffeb3b','#ff9800','#ccc'][Math.ceil(Math.random()*11)-1];
-const updateInfoPanel = (data) => {$id('bottompanel').style.display=data?'block':'none'; $id('bp_info').innerHTML=data }
+const updateInfoPanel = (data) => {if(!$id('bottompanel')) return;$id('bottompanel').style.display=data?'block':'none'; $id('bp_info').innerHTML=data }
 
 /* Get all the big images */
 const getImgList = () => {
