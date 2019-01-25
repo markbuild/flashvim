@@ -1,4 +1,4 @@
-const mlog = (_info) => {console.log('%c'+_info,"color:#fff;background-image:-webkit-gradient(linear, 0% 0%, 100% 100%, from(#3E6CD0), to(#C93856));border-radius:2px;padding:2px;font-weight:bold")}
+const mlog = _info => {console.log('%c'+_info,"color:#fff;background-image:-webkit-gradient(linear, 0% 0%, 100% 100%, from(#3E6CD0), to(#C93856));border-radius:2px;padding:2px;font-weight:bold")}
 if(navigator.userAgent.includes("Firefox")) {
     mlog('FlashVim in Firefox!');
     chrome = browser;
@@ -6,14 +6,11 @@ if(navigator.userAgent.includes("Firefox")) {
     mlog('FlashVim in Chrome!');
 }
 /***+++++++++++++++++++ Event Listener ++++++++++++++++++++++++++++***/
-document.addEventListener("DOMContentLoaded", () => { webinit()});
-document.addEventListener('keydown', (event) => {keydownHandler(event)}, false );
-document.addEventListener('keyup', (event) => {keyupHandler(event)}, false );
+document.addEventListener("DOMContentLoaded", _ => { webinit()});
+document.addEventListener('keydown', event => {keydownHandler(event)}, false );
+document.addEventListener('keyup', event => {keyupHandler(event)}, false );
 /***+++++++++++++++++++ Event Processor ++++++++++++++++++++++++++++***/
-const webinit = () => {
-    if(location.hostname == "www.bing.com" && location.pathname == "/") {
-        document.body.innerHTML = document.body.innerHTML;
-    }
+const webinit = _ => {
     const bottomPanel= document.createElement("div");
     bottomPanel.id='bottompanel';
     bottomPanel.innerHTML='<div id="bp_info"></div>';
@@ -29,7 +26,7 @@ var labelactive = false;
 var labelshow = true;
 var labelindex = 0;
 var tid=0; // Timeout_ID
-const keyupHandler = (event) => {
+const keyupHandler = event => {
     if(event.keyCode == 16) {
         Shift = false;
     }
@@ -41,7 +38,7 @@ const keyupHandler = (event) => {
         document.body.blur();
     }
 }
-const keydownHandler = (event) => {
+const keydownHandler = event => {
     clearTimeout(tid);
     if(insert_mode) {
         updateInfoPanel('<span style="color:#FFEB3B">-- INSERT --</span>');
@@ -173,9 +170,12 @@ const keydownHandler = (event) => {
         case ':e': // Reload the page
         case ';e': // Fault tolerance 
             location.reload();break;
-        case ':q': // Quit this tab,close tab
-        case ';q': // Fault tolerance 
+        case ':x': // Quit this tab,close tab
+        case ';x': // Fault tolerance 
             chrome.runtime.sendMessage({type:'removecurrenttab'});break;
+        case ':qa': // Close all tabs
+        case ';qa': // Fault tolerance 
+            chrome.runtime.sendMessage({type:'removealltab'});break;
         case ":sav": 
                if(location.pathname.match(/doku\.php/)){ // work for dokuwiki
                    $id("edbtn__save").click();
@@ -238,7 +238,7 @@ const keydownHandler = (event) => {
                try{document.getSelection().anchorNode.parentNode.innerHTML=document.getSelection().anchorNode.textContent.replace(document.getSelection().toString(),"");} catch(err){} cmd=''; break;
     }
     if(cmd.match(/^\.\w+\.$/)) { //If match /string..
-        chrome.runtime.sendMessage({type:'getlink',cmd:cmd.slice(1,-1)},function (response) {
+        chrome.runtime.sendMessage({type:'getlink',cmd:cmd.slice(1,-1)}, response => {
             console.log('content get response:',response);
             response != null ? open(response) : 0;
             cmd ='';
@@ -267,17 +267,17 @@ const keydownHandler = (event) => {
         window.location.href='http://'+cmd.slice(1);
         cmd='';
     }
-    timeout(4).then(()=>{ cmd='';updateInfoPanel('')});
+    timeout(4).then(_ =>{ cmd='';updateInfoPanel('')});
 }
 
 /*++++++++++++++++++++ Helper Function +++++++++++++++++++++++*/
-const $id = (elem) => document.getElementById(elem);
-const $tag = (elem) => document.getElementsByTagName(elem);
-const randomcolor = () => ['#f44336','#db43f5','#8549ef','#2196f3','#00bcd4','#21ccbc','#8bc34a','#ffeb3b','#ff9800','#ccc'][Math.ceil(Math.random()*11)-1];
-const updateInfoPanel = (data) => {if(!$id('bottompanel')) return;$id('bottompanel').style.display=data?'block':'none'; $id('bp_info').innerHTML=data }
+const $id = elem => document.getElementById(elem);
+const $tag = elem => document.getElementsByTagName(elem);
+const randomcolor = _ => ['#f44336','#db43f5','#8549ef','#2196f3','#00bcd4','#21ccbc','#8bc34a','#ffeb3b','#ff9800','#ccc'][Math.ceil(Math.random()*11)-1];
+const updateInfoPanel = data => {if(!$id('bottompanel')) return;$id('bottompanel').style.display=data?'block':'none'; $id('bp_info').innerHTML=data }
 
 /* Get all the big images */
-const getImgList = () => {
+const getImgList = _ => {
     var imgs = $tag('img');
     var i=0,l=imgs.length;
     var html ='<h1 class="notice">Image List</h1>';
@@ -324,5 +324,5 @@ const insertlabels = (elems,type) => {
         }
     }
 }
-const hideallimage = () => { var imgs = $tag('img'); var i=0,l=imgs.length; for(i;i<l;i++) { imgs[i].style.opacity = 0 } }
-const timeout = (s) => new Promise((resolve, reject) => { tid = setTimeout(resolve, 1000*s, 'done');});
+const hideallimage = _ => { var imgs = $tag('img'); var i=0,l=imgs.length; for(i;i<l;i++) { imgs[i].style.opacity = 0 } }
+const timeout = s => new Promise((resolve, reject) => { tid = setTimeout(resolve, 1000*s, 'done');});

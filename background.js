@@ -16,11 +16,18 @@ if(navigator.userAgent.includes("Firefox")) {
 chrome.runtime.onMessage.addListener((request,sender,sendResponse) => {
     switch(request.type) {
         case 'removecurrenttab':
-            chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+            chrome.tabs.query({active: true, currentWindow: true}, tabs => {
                 const current = tabs[0]
                 //alert(current.id)
                 //alert(current.index)
                 chrome.tabs.remove(current.id);//Remove current tab
+            });
+            break;
+        case 'removealltab':
+            chrome.tabs.query({}, tabs => {
+                for (let i = 0; i < tabs.length; i++) {
+                    chrome.tabs.remove(tabs[i].id);
+                }
             });
             break;
         case 'changetab':
@@ -31,11 +38,11 @@ chrome.runtime.onMessage.addListener((request,sender,sendResponse) => {
             } else if(request.direction){ 
                 _direction= request.direction;
             }
-            chrome.tabs.query({active: true,currentWindow: true}, (tabs) => {
+            chrome.tabs.query({active: true,currentWindow: true}, tabs => {
                 var current = tabs[0],
                     tabId = current.id,
                     currentIndex = current.index;
-                chrome.tabs.query({currentWindow: true}, (tabs) => {
+                chrome.tabs.query({currentWindow: true}, tabs => {
                     if(_num) 
                         _index = _num-1;
                     else
@@ -67,7 +74,7 @@ chrome.runtime.onMessage.addListener((request,sender,sendResponse) => {
   +++     2015 tabnumber       +++
   ++++++++++++++++++++++++++++++++
   */
-const updatetab = (details) => {
+const updatetab = details => {
     if(!details.url) return
     if(!details.url.startsWith('http') && !details.url.startsWith('file')) return;
     var id = details.id
@@ -80,9 +87,9 @@ const updatetab = (details) => {
         title = title.substr(5);
     }
     title = transformnumber(index + 1) + ' - ' + title;
-    chrome.tabs.executeScript(id, {code : "document.title = '" + title + "';"}, _=>{ let e = chrome.runtime.lastError; if(e !== undefined) console.log(id, e) });
+    chrome.tabs.executeScript(id, {code : "document.title = '" + title + "';"}, _ =>{ let e = chrome.runtime.lastError; if(e !== undefined) console.log(id, e) });
 };
-const transformnumber = (n) => {
+const transformnumber = n => {
     switch (n){
         case 1: return '❶';break;
         case 2: return '❷';break;
@@ -97,26 +104,26 @@ const transformnumber = (n) => {
         default:return n;
     }
 }
-const updateAllTabs = () => {
-    chrome.tabs.query({}, (tabs) => {
+const updateAllTabs = _ => {
+    chrome.tabs.query({}, tabs => {
         for (var i = 0; i < tabs.length; i++) {
             updatetab(tabs[i]);
         }
     });
     return true;
 }
-chrome.tabs.onCreated.addListener((Id) => {
+chrome.tabs.onCreated.addListener(Id => {
     updateAllTabs();
 });
 chrome.tabs.onUpdated.addListener((Id, changeInfo, tab) => {
     updateAllTabs();
 });
-chrome.tabs.onActivated.addListener((Id) => {
+chrome.tabs.onActivated.addListener(Id => {
     updateAllTabs();
 });
-chrome.tabs.onMoved.addListener((Id) => {
+chrome.tabs.onMoved.addListener(Id => {
     updateAllTabs();
 });
-chrome.tabs.onRemoved.addListener((Id) => {
+chrome.tabs.onRemoved.addListener(Id => {
     updateAllTabs();
 });
