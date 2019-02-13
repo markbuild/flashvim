@@ -1,6 +1,6 @@
 ﻿{
 	"name": "FlashVim",
-	"version": "1.19.1",
+	"version": "1.19.2",
 	"manifest_version": 2,
 	"description":"Vim for Google Chrome and Firefox.",
 	"icons": {"48": "source/48.png"},

@@ -1,12 +1,14 @@
 # flashvim
 ![](source/128.png?raw=true)
 
+https://addons.mozilla.org/en-US/firefox/addon/flashvim/
+
 Vim for Chrome and Firefox.
 
 ```
 Navigating the current page:
 
-:help              Open Help Page
+:help              Help
 h                  Scroll left
 j                  Scroll down
 k                  Scroll up
@@ -31,7 +33,7 @@ b                  Show/Hide label IDs
 {i}n               Open the link which label ID is {i} in a new tab
 {i}r               Redirect to the link which label ID is {i}
 {i}c               Click the element which label ID is {i}
-{i}f               Focus on the element which label ID is \d
+{i}f               Focus on the element which label ID is {i} 
 <Arrow Right>      Follow the link labeled 'next' or '>'. Helpful for browsing paginated sites.
 <Arrow Left>       Follow the link labeled 'previous' or '<'. Helpful for browsing paginated sites.
 .<key>.            Open the link which you stored in the linkmap by key
@@ -43,9 +45,9 @@ Additional advanced browsing commands:
 :hideimg<Enter>    Hide all the images
 :date<Enter>       Display the Date and Time
 :+jquery<Enter>    Insert jQuery Script
-:tc<Enter>         Translate Page to Chinese
-:te<Enter>         Translate Page to English
-:tf<Enter>         Translate Page to French
+:tc<Enter>         Translate to Chinese
+:te<Enter>         Translate to English
+:tf<Enter>         Translate to French
 
 ESC will clear any commands and will also exit insert modes.
 ```
