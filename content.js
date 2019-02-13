@@ -18,6 +18,12 @@ const webinit = _ => {
     var first=document.body.firstChild;
     document.body.insertBefore(bottomPanel,first);
 };
+var prev_patterns = '';
+var next_patterns = '';
+chrome.runtime.sendMessage({type:'getpatterns'}, response => {
+    prev_patterns = response.prev
+    next_patterns = response.next
+});
 var cmd=''; // Command will display on Control Panel
 var insert_mode = false;
 var CapsLock = false;
@@ -42,27 +48,50 @@ const keydownHandler = event => {
     clearTimeout(tid);
     if(insert_mode) {
         updateInfoPanel('<span style="color:#FFEB3B">-- INSERT --</span>');
+        timeout(2).then(_ =>{ updateInfoPanel('')});
         return; 
     }
     var target_node = event.target.nodeName;
     if(target_node=='INPUT'||target_node=='TEXTAREA') {
         updateInfoPanel('<span style="color:#FFEB3B">-- INSERT --</span>');
+        timeout(2).then(_ =>{ updateInfoPanel('')});
         return;
     }
-    // Prev Page | Next Page
+    // Prev Page
     if(event.keyCode==37) { // Arrow Left
+        var p = prev_patterns.split(',');
         var taga = document.getElementsByTagName('a');
         var alen=taga.length;
         for(var key=0;key<alen;key++){
-            if(taga[key].text&&(taga[key].text.includes("上一页")||taga[key].text.includes("前页")||taga[key].text.toLowerCase().includes("prev")||taga[key].text.includes("«"))&&taga[key].href){location.replace(taga[key].href);updateInfoPanel('Prev Page');}
+            if(taga[key].text && taga[key].href) {
+                for(var i in p) { 
+                    if(taga[key].text.toLocaleLowerCase().includes(p[i])) {
+                        location.replace(taga[key].href);
+                        updateInfoPanel('Previous Page');
+                        timeout(2).then(_ =>{ updateInfoPanel('')});
+                        return;
+                    }
+                }
+            }
         }
         return;
     }
+    // Next Page
     if(event.keyCode==39) {// Arrow right 
+        var p = next_patterns.split(',');
         var taga=document.getElementsByTagName('a');
         var alen=taga.length;
         for(var key=0;key<alen;key++){
-            if(taga[key].text&&(taga[key].text.includes("下一页")||taga[key].text.includes("后页")||taga[key].text.toLowerCase().includes("next")||taga[key].text.includes("»"))&&taga[key].href){location.replace(taga[key].href);updateInfoPanel('Next Page');}
+            if(taga[key].text && taga[key].href) {
+                for(var i in p) { 
+                    if(taga[key].text.toLocaleLowerCase().includes(p[i])) {
+                        location.replace(taga[key].href);
+                        updateInfoPanel('Next Page');
+                        timeout(2).then(_ =>{ updateInfoPanel('')});
+                        return;
+                    }
+                }
+            }
         }
         return;
     }
@@ -87,7 +116,7 @@ const keydownHandler = event => {
         // Delete last char
         case 8://Backspace  Delete in MacBook
         case 46:if(cmd.length>0) {event.preventDefault();cmd=cmd.substring(0,cmd.length-1)} break;//Delete
-        case 13:cmd='';break;//Enter
+        case 13:break;//Enter
         case 48:Shift?cmd+=')':cmd+='0';break;
         case 49:Shift?cmd+='!':cmd+='1';break;
         case 50:Shift?cmd+='@':cmd+='2';break;
@@ -122,158 +151,168 @@ const keydownHandler = event => {
     }
     if($id('bp_info')) updateInfoPanel(cmd);
     // Process instruction 
-    switch(cmd){
-        case '/'://Search
-            if(location.host.match(/google\.com/)){
-                $id('lst-ib').focus();$id('lst-ib').style.color=randomcolor();$id('lst-ib').style.background="#000";$id('lst-ib').style.borderRadius="4px";$id('lst-ib').style.padding="0 3px";
-            } else if(location.host.match(/baidu\.com/)){
-                $id('kw').focus();$id('kw').style.color=randomcolor();$id('kw').style.background="#000";$id('kw').style.borderRadius="2px";$id('kw').style.padding="0 3px";
-            } else if(location.href.match(/doku\./)){
-                $id('qsearch__in').focus();$id('qsearch__in').style.color=randomcolor();$id('qsearch__in').style.background="#000";
-            } else if(location.host.match(/bing\.com/)){
-                $id('sb_form_q').focus();$id('sb_form_q').style.color=randomcolor();$id('sb_form_q').style.background="#000";$id('sb_form_q').style.borderRadius="4px";$id('sb_form_q').style.padding="0 3px";
-            } else {
+    if(event.keyCode == 13) { // Enter
+        switch(cmd){
+            case ':e': // Reload the page
+            case ';e': // Fault tolerance 
+                location.reload();break;
+            case ':x': // Quit this tab,close tab
+            case ';x': // Fault tolerance 
+            case ':q': // Quit this tab,close tab
+            case ';q': // Fault tolerance 
+                chrome.runtime.sendMessage({type:'removecurrenttab'});break;
+            case ':xa': // Close all tabs
+            case ';xa': // Fault tolerance 
+            case ':qa': // Close all tabs
+            case ';qa': // Fault tolerance 
+                chrome.runtime.sendMessage({type:'removealltab'});break;
+            case ":sav": 
+                if(location.pathname.match(/doku\.php/)){ // work for dokuwiki
+                    $id("edbtn__save").click();
+                }
+                break;
+            case ';tabnew':
+            case ':tabnew': window.open(''); break;
+
+            case ':tc'://Google Translate:to Chinese
+                if(location.host.startsWith('translate.google.com')) {
+                    location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=zh-CN&text='+$id('source').value;
+                } else if(location.href.startsWith('http')) {
+                    open('https://translate.google.com/translate?sl=auto&tl=zh-CN&u='+location.href);
+                }
                 cmd='';break;
-            }
-            event.preventDefault(); 
-            cmd='';break;
-        case ':date':
-            cmd='';updateInfoPanel(new Date()).toString().slice(0,24);break;
-        case ':tc'://Google Translate:to Chinese
-            if(location.host.startsWith('translate.google.com')) {
-               location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=zh-CN&text='+$id('source').value;
-            } else if(location.href.startsWith('http')) {
-                open('https://translate.google.com/translate?sl=auto&tl=zh-CN&u='+location.href);
-            }
-            cmd='';break;
-        case ':td'://Google Translate:to German 
-            if(location.host.startsWith('translate.google.com')) {
-               location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=de&text='+$id('source').value;
-            } else if(location.href.startsWith('http')) {
-                open('https://translate.google.com/translate?sl=auto&tl=de&u='+location.href);
-            }
-            cmd='';break;
-        case ':te'://Google Translate:to English
-            if(location.host.startsWith('translate.google.com')) {
-               location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=en&text='+$id('source').value;
-            } else if(location.href.startsWith('http')) {
-                open('https://translate.google.com/translate?sl=auto&tl=en&u='+location.href);
-            }
-            cmd='';break;
-        case ':tf'://Google Translate:to French 
-            if(location.host.startsWith('translate.google.com')) {
-               location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=fr&text='+$id('source').value;
-            } else if(location.href.startsWith('http')) {
-                open('https://translate.google.com/translate?sl=auto&tl=fr&u='+location.href);
-            }
-            cmd='';break;
-        case ':e': // Reload the page
-        case ';e': // Fault tolerance 
-            location.reload();break;
-        case ':x': // Quit this tab,close tab
-        case ';x': // Fault tolerance 
-            chrome.runtime.sendMessage({type:'removecurrenttab'});break;
-        case ':qa': // Close all tabs
-        case ';qa': // Fault tolerance 
-            chrome.runtime.sendMessage({type:'removealltab'});break;
-        case ":sav": 
-               if(location.pathname.match(/doku\.php/)){ // work for dokuwiki
-                   $id("edbtn__save").click();
-               }
-               break;
-        case ';tabnew':
-        case ':tabnew': window.open(''); break;
-        case ':imglist'://Display all the big original images on the bottom
-               getImgList(); cmd='';break;
-        case ':imghide'://Hide all the images
-               hideallimage();cmd='';break;
-        case ':insertjquery':
-               var script = document.createElement('script');
-               script.setAttribute('src', "http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.9.1.js");
-               mlog('insertjquery');
-               $tag('head')[0].appendChild(script);cmd='';break;
-        case 'dd':
-               try{document.getSelection().anchorNode.parentNode.innerHTML='';} catch(err){} cmd='';break;
-        case 'gg'://Scroll to Top
-               window.scrollTo(0,0);cmd='';break;
-        case 'gt': // Go to next tab
-               chrome.runtime.sendMessage({type:'changetab',direction:1});cmd='';break;
-        case 'gT': // Go to previous tab
-               chrome.runtime.sendMessage({type:'changetab',direction:-1});cmd='';break;
-        case 'G': // Scroll to Bottom
-               window.scrollTo(0,document.body.scrollHeight);cmd='';break;
-        case 'l':// Hide or Show labels
-               cmd='';
-               if(!labelactive){
-                   insertlabels($tag('input'),0);
-                   insertlabels($tag('textarea'),0);
-                   insertlabels($tag('select'),0);
-                   insertlabels($tag('button'),0);
-                   insertlabels($tag('a'),1);
-                   labelactive = true;
-               } else{
-                   var spans = $tag('span');
-                   for(var key in spans){
-                       if(spans[key].className=="mk_vim_label"){
-                           if(labelshow){
-                               spans[key].style.opacity=0;
-                           }else{
-                               spans[key].style.opacity=1;
-                           }
-                       }
-                   }
-                   labelshow = labelshow?false:true;
-               }
-               break;
-        case "i": 
-               if(location.pathname.match(/doku\.php/)){ // work for wiki
-                   $id('dokuwiki__pagetools').getElementsByTagName("a")[0].click()
-               }
-               cmd='';break;
-        case 'j': // Scroll Down
-               window.scrollTo(0,document.documentElement.scrollTop+window.screen.height/2);cmd='';break;
-        case 'k': // Scroll Up
-               window.scrollTo(0,document.documentElement.scrollTop-window.screen.height/2);cmd='';break;
-        case 'x':
-               try{document.getSelection().anchorNode.parentNode.innerHTML=document.getSelection().anchorNode.textContent.replace(document.getSelection().toString(),"");} catch(err){} cmd=''; break;
+            case ':te'://Google Translate:to English
+                if(location.host.startsWith('translate.google.com')) {
+                    location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=en&text='+$id('source').value;
+                } else if(location.href.startsWith('http')) {
+                    open('https://translate.google.com/translate?sl=auto&tl=en&u='+location.href);
+                }
+                cmd='';break;
+            case ':tf'://Google Translate:to French 
+                if(location.host.startsWith('translate.google.com')) {
+                    location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=fr&text='+$id('source').value;
+                } else if(location.href.startsWith('http')) {
+                    open('https://translate.google.com/translate?sl=auto&tl=fr&u='+location.href);
+                }
+                cmd='';break;
+            case ':imglist'://Display all the big original images on the bottom
+                getImgList(); cmd='';break;
+            case ':hideimg'://Hide all the images
+                hideallimage();cmd='';break;
+            case ':date':
+                cmd='';updateInfoPanel(new Date()).toString().slice(0,24);break;
+            case ':+jquery':
+                var script = document.createElement('script');
+                script.setAttribute('src', location.protocol+"//ajax.aspnetcdn.com/ajax/jQuery/jquery-1.9.1.js");
+                mlog('insert iQuery Script');
+                $tag('head')[0].appendChild(script);cmd='';break;
+
+        }
+        cmd='';updateInfoPanel('')
+    } else {
+        switch(cmd){
+            case '/'://Search
+                if(location.host.match(/baidu\.com/)){
+                    $id('kw').focus();
+                } else {
+                    var taginput=document.getElementsByTagName('input');
+                    var inputlen=taginput.length;
+                    for(var key=0;key<inputlen;key++){
+                        if(taginput[key].type == "search" || (taginput[key].type == "text" && taginput[key].placeholder.toLocaleLowerCase().includes("search")) || (taginput[key].type == "text" && taginput[key].title.toLocaleLowerCase().includes("search")) ) {
+                            taginput[key].focus()
+                            cmd='';
+                            return
+                        }
+                    }
+                }
+                event.preventDefault(); 
+                cmd='';break;
+            case 'dd':
+                try{document.getSelection().anchorNode.parentNode.innerHTML='';} catch(err){} cmd='';break;
+            case 'gg'://Scroll to Top of the Page
+                window.scrollTo(0,0);cmd='';break;
+            case 'gt': // Go to next tab
+                chrome.runtime.sendMessage({type:'changetab',direction:1});cmd='';break;
+            case 'gT': // Go to previous tab
+                chrome.runtime.sendMessage({type:'changetab',direction:-1});cmd='';break;
+            case 'G': // Scroll to Bottom of the Page
+                window.scrollTo(0,document.body.scrollHeight);cmd='';break;
+            case 'b':// Hide or Show labels
+                cmd='';
+                if(!labelactive){
+                    insertlabels($tag('input'),0);
+                    insertlabels($tag('textarea'),0);
+                    insertlabels($tag('select'),0);
+                    insertlabels($tag('button'),0);
+                    insertlabels($tag('a'),1);
+                    labelactive = true;
+                } else{
+                    var spans = $tag('span');
+                    for(var key in spans){
+                        if(spans[key].className=="mk_vim_label"){
+                            if(labelshow){
+                                spans[key].style.opacity=0;
+                            }else{
+                                spans[key].style.opacity=1;
+                            }
+                        }
+                    }
+                    labelshow = labelshow?false:true;
+                }
+                break;
+            case "i": 
+                if(location.pathname.match(/doku\.php/)){ // For dokuwiki
+                    $id('dokuwiki__pagetools').getElementsByTagName("a")[0].click()
+                }
+                cmd='';break;
+            case 'h': // Scroll Left 
+                window.scrollTo(document.documentElement.scrollLeft-window.screen.width/2,document.documentElement.scrollTop);cmd='';break;
+            case 'j': // Scroll Down
+                window.scrollTo(document.documentElement.scrollLeft,document.documentElement.scrollTop+window.screen.height/2);cmd='';break;
+            case 'k': // Scroll Up
+                window.scrollTo(document.documentElement.scrollLeft,document.documentElement.scrollTop-window.screen.height/2);cmd='';break;
+            case 'l': // Scroll Left 
+                window.scrollTo(document.documentElement.scrollLeft+window.screen.width/2,document.documentElement.scrollTop);cmd='';break;
+            case 'x':
+                try{document.getSelection().anchorNode.parentNode.innerHTML=document.getSelection().anchorNode.textContent.replace(document.getSelection().toString(),"");} catch(err){} cmd=''; break;
+        }
+        if(cmd.match(/^\.\w+\.$/)) { //If match the key of linkmap
+            chrome.runtime.sendMessage({type:'getlink',cmd:cmd.slice(1,-1)}, response => {
+                mlog('content get response:',response);
+                response != null ? open(response) : 0;
+                cmd ='';
+            });
+        } else if(cmd.match(/^\d+gt$/)){//Go to tab in position \d
+            chrome.runtime.sendMessage({type:'changetab',num:cmd.slice(0,-2)});
+            cmd='';
+        } else if(cmd.match(/^\d+r$/)){// [r]edirect to the link which label ID  is \d
+            window.location.href=$id('mk_label'+cmd.slice(0,-1)).parentElement.href;
+            cmd='';
+        } else if(cmd.match(/^\d+n$/)){// [o]pen the link which label ID is \d in a new tab
+            open($id('mk_label'+cmd.slice(0,-1)).parentElement.href);
+            $id('mk_label'+cmd.slice(0,-1)).style.opacity=0;//Hide aim label
+            cmd='';
+        } else if(cmd.match(/^\d+c$/)){// [c]lick the link  which label ID is \d
+            $id('mk_label'+cmd.slice(0,-1)).nextElementSibling.click();
+            cmd='';
+        } else if(cmd.match(/^\d+f$/)){// [f]ocus on the element which label ID is \d
+            $id('mk_label'+cmd.slice(0,-1)).nextElementSibling.focus();
+            $id('mk_label'+cmd.slice(0,-1)).style.opacity=0;//Hide aim label
+            cmd='';
+        } else if(cmd.match(/^\+[a-z0-9-\.]+\.(com|io|us|cn|jp|de|fr|ru|local)$/)){
+            open('http://'+cmd.slice(1));
+            cmd='';
+        } else if(cmd.match(/^=[a-z0-9-\.]+\.(com|io|us|cn|jp|de|fr|ru|local)$/)){
+            window.location.href='http://'+cmd.slice(1);
+            cmd='';
+        }
     }
-    if(cmd.match(/^\.\w+\.$/)) { //If match /string..
-        chrome.runtime.sendMessage({type:'getlink',cmd:cmd.slice(1,-1)}, response => {
-            console.log('content get response:',response);
-            response != null ? open(response) : 0;
-            cmd ='';
-        });
-    } else if(cmd.match(/^\d+gt$/)){//Go to tab in position \d
-        chrome.runtime.sendMessage({type:'changetab',num:cmd.slice(0,-2)});
-        cmd='';
-    } else if(cmd.match(/^\d+r$/)){// [r]edirect to the link by label id 
-        window.location.href=$id('mk_label'+cmd.slice(0,-1)).parentElement.href;
-        cmd='';
-    } else if(cmd.match(/^\d+n$/)){// [o]pen a link in a new tab by label id
-        open($id('mk_label'+cmd.slice(0,-1)).parentElement.href);
-        $id('mk_label'+cmd.slice(0,-1)).style.opacity=0;//Hide aim label
-        cmd='';
-    } else if(cmd.match(/^\d+c$/)){// [c]lick the link by label id
-        $id('mk_label'+cmd.slice(0,-1)).nextElementSibling.click();
-        cmd='';
-    } else if(cmd.match(/^\d+f$/)){// [f]ocus aim element by label id
-        $id('mk_label'+cmd.slice(0,-1)).nextElementSibling.focus();
-        $id('mk_label'+cmd.slice(0,-1)).style.opacity=0;//Hide aim label
-        cmd='';
-    } else if(cmd.match(/^\+[a-z0-9-\.]+\.(com|io|us|cn|jp|de|fr|ru|local)$/)){
-        open('http://'+cmd.slice(1));
-        cmd='';
-    } else if(cmd.match(/^=[a-z0-9-\.]+\.(com|io|us|cn|jp|de|fr|ru|local)$/)){
-        window.location.href='http://'+cmd.slice(1);
-        cmd='';
-    }
-    timeout(4).then(_ =>{ cmd='';updateInfoPanel('')});
+    timeout(4).then(_ =>{ cmd='';Shift=false;updateInfoPanel('')});
 }
 
 /*++++++++++++++++++++ Helper Function +++++++++++++++++++++++*/
 const $id = elem => document.getElementById(elem);
 const $tag = elem => document.getElementsByTagName(elem);
-const randomcolor = _ => ['#f44336','#db43f5','#8549ef','#2196f3','#00bcd4','#21ccbc','#8bc34a','#ffeb3b','#ff9800','#ccc'][Math.ceil(Math.random()*11)-1];
 const updateInfoPanel = data => {if(!$id('bottompanel')) return;$id('bottompanel').style.display=data?'block':'none'; $id('bp_info').innerHTML=data }
 
 /* Get all the big images */

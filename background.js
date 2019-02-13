@@ -10,6 +10,12 @@ if(!localStorage.getItem('linkmap')) { // Init Setting
         "fv":"https://github.com/markbuild/flashvim"
     }));
 }
+if(!localStorage.getItem('patterns')) { // Init Setting
+    localStorage.setItem('patterns', JSON.stringify({
+        "prev":"prev,<,‹,←,«,<<,上一页,前页",
+        "next":"next,>,›,→,»,>>,下一页,后页"
+    }));
+}
 if(navigator.userAgent.includes("Firefox")) {
     chrome = browser;
 } 
@@ -66,6 +72,13 @@ chrome.runtime.onMessage.addListener((request,sender,sendResponse) => {
         case 'setlinkmap':
             localStorage.setItem('linkmap', JSON.stringify(request.linkmap));
             sendResponse(JSON.parse(localStorage.getItem('linkmap')));
+            break;
+        case 'getpatterns':
+            sendResponse(JSON.parse(localStorage.getItem('patterns')));
+            break;
+        case 'setpatterns':
+            localStorage.setItem('patterns', JSON.stringify(request.patterns));
+            sendResponse(JSON.parse(localStorage.getItem('patterns')));
             break;
     }
 });

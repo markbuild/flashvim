@@ -1,13 +1,20 @@
 var linkmap = {};
+var patterns = {};
 
 chrome.runtime.sendMessage({type:'getlinkmap'},function (response) {
     linkmap = response;
     render_link_map_table();
 });
+chrome.runtime.sendMessage({type:'getpatterns'},function (response) {
+    patterns = response;
+    render_patterns_table();
+});
 
 document.getElementById("add_new_map").addEventListener('click', (event) => { add_new_map() }, false );
 document.getElementById("save_linkmap").addEventListener('click', (event) => { save_linkmap() }, false );
 document.getElementById("reset_linkmap").addEventListener('click', (event) => { reset_linkmap() }, false );
+document.getElementById("save_patterns").addEventListener('click', (event) => { save_patterns() }, false );
+document.getElementById("reset_patterns").addEventListener('click', (event) => { reset_patterns() }, false );
 document.getElementById("uploadbackupfile").addEventListener('change', (event) => {loadfile(event.target)}, false );
 
 const render_link_map_table = () => {
@@ -22,9 +29,14 @@ const render_link_map_table = () => {
     }
     update_backup_link();
 };
+const render_patterns_table = () => {
+    document.getElementById("prev_patterns").value = patterns.prev;
+    document.getElementById("next_patterns").value = patterns.next;
+    update_backup_link();
+};
 
 const update_backup_link = () => {
-    const options={linkmap:linkmap};
+    const options={linkmap:linkmap, patterns:patterns};
     const str = JSON.stringify(options);
     const blob = new Blob([str], {type: "text/json,charset=UTF-8"});
     const elem = document.getElementById("downloadbackup");
@@ -40,6 +52,10 @@ const loadfile = (event_this) => {
         chrome.runtime.sendMessage({type:'setlinkmap',linkmap:options.linkmap},function (response) {
             linkmap = response;
             render_link_map_table();
+        });
+        chrome.runtime.sendMessage({type:'setpatterns',linkmap:options.patterns},function (response) {
+            patterns = response;
+            render_patterns_table();
         });
     };
     reader.readAsBinaryString(file);
@@ -58,7 +74,6 @@ const add_new_map = () => {
 const removecurrentline = (event) => {
     event.target.parentElement.parentElement.remove();
 };
-
 const reset_linkmap = () => {
     render_link_map_table();
 }
@@ -81,5 +96,14 @@ const save_linkmap = () => {
     });
     chrome.runtime.sendMessage({type:'setlinkmap',linkmap:linkmap},function (response) {
         render_link_map_table();
+    });
+};
+const reset_patterns = () => {
+    render_patterns_table();
+}
+const save_patterns= () => {
+    patterns = {"prev":document.getElementById("prev_patterns").value.toLocaleLowerCase(), "next":document.getElementById("next_patterns").value.toLocaleLowerCase()}
+    chrome.runtime.sendMessage({type:'setpatterns', patterns:patterns},function (response) {
+        render_patterns_table();
     });
 };
