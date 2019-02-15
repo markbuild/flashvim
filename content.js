@@ -1,14 +1,30 @@
+const $id = elem => document.getElementById(elem);
+const $tag = elem => document.getElementsByTagName(elem);
 const mlog = _info => {console.log('%c'+_info,"color:#fff;background-image:-webkit-gradient(linear, 0% 0%, 100% 100%, from(#3E6CD0), to(#C93856));border-radius:2px;padding:2px;font-weight:bold")}
+const updateInfoPanel = data => {if(!$id('bottompanel')) return;$id('bottompanel').style.display=data?'block':'none'; $id('bp_info').innerHTML=data }
+const timeout = s => new Promise((resolve, reject) => { tid = setTimeout(resolve, 1000*s, 'done');});
 if(navigator.userAgent.includes("Firefox")) {
-    mlog('FlashVim in Firefox!');
     chrome = browser;
-} else {
-    mlog('FlashVim in Chrome!');
-}
+} 
 /***+++++++++++++++++++ Event Listener ++++++++++++++++++++++++++++***/
-document.addEventListener("DOMContentLoaded", _ => { webinit()});
-document.addEventListener('keydown', event => {keydownHandler(event)}, false );
-document.addEventListener('keyup', event => {keyupHandler(event)}, false );
+// https://stackoverflow.com/questions/12045440/difference-between-document-addeventlistener-and-window-addeventlistener
+
+document.addEventListener("DOMContentLoaded", _ => {webinit()});
+var disableflashvim = localStorage.getItem('DisableFlashVim') == 1;
+var prev_patterns = '';
+var next_patterns = '';
+if(disableflashvim) {
+    mlog('FlashVim disabled on this Page. Help >> https://github.com/markbuild/flashvim#readme');
+    document.addEventListener('keyup', event => { keyupHandler(event)}, true);
+} else {
+    mlog('FlashVim enabled on this Page. Help >> https://github.com/markbuild/flashvim#readme');
+    document.addEventListener('keydown', event => {event.stopPropagation();keydownHandler(event)}, true);
+    document.addEventListener('keyup', event => {event.stopPropagation();keyupHandler(event)}, true);
+    chrome.runtime.sendMessage({type:'getpatterns'}, response => {
+        prev_patterns = response.prev
+        next_patterns = response.next
+    });
+}
 /***+++++++++++++++++++ Event Processor ++++++++++++++++++++++++++++***/
 const webinit = _ => {
     const bottomPanel= document.createElement("div");
@@ -18,12 +34,6 @@ const webinit = _ => {
     var first=document.body.firstChild;
     document.body.insertBefore(bottomPanel,first);
 };
-var prev_patterns = '';
-var next_patterns = '';
-chrome.runtime.sendMessage({type:'getpatterns'}, response => {
-    prev_patterns = response.prev
-    next_patterns = response.next
-});
 var cmd=''; // Command will display on Control Panel
 var insert_mode = false;
 var CapsLock = false;
@@ -33,6 +43,16 @@ var labelshow = true;
 var labelindex = 0;
 var tid=0; // Timeout_ID
 const keyupHandler = event => {
+    if(event.keyCode == 115) {
+        if(disableflashvim) {
+            localStorage.setItem('DisableFlashVim', 0)
+            updateInfoPanel('<span style="color:#FFEB3B">Flashvim Enabled</span>')
+        } else {
+            localStorage.setItem('DisableFlashVim', 1)
+            updateInfoPanel('<span style="color:#FFEB3B">Flashvim Disabled</span>')
+        }
+        timeout(1).then(_ =>{ location = location });
+    }
     if(event.keyCode == 16) {
         Shift = false;
     }
@@ -206,6 +226,8 @@ const keydownHandler = event => {
                 script.setAttribute('src', location.protocol+"//ajax.aspnetcdn.com/ajax/jQuery/jquery-1.9.1.js");
                 mlog('insert iQuery Script');
                 $tag('head')[0].appendChild(script);cmd='';break;
+            case ':help':
+                cmd='';open('https://github.com/markbuild/flashvim/blob/master/README.md#readme');break;
 
         }
         cmd='';updateInfoPanel('')
@@ -278,7 +300,6 @@ const keydownHandler = event => {
         }
         if(cmd.match(/^\.\w+\.$/)) { //If match the key of linkmap
             chrome.runtime.sendMessage({type:'getlink',cmd:cmd.slice(1,-1)}, response => {
-                mlog('content get response:',response);
                 response != null ? open(response) : 0;
                 cmd ='';
             });
@@ -311,9 +332,6 @@ const keydownHandler = event => {
 }
 
 /*++++++++++++++++++++ Helper Function +++++++++++++++++++++++*/
-const $id = elem => document.getElementById(elem);
-const $tag = elem => document.getElementsByTagName(elem);
-const updateInfoPanel = data => {if(!$id('bottompanel')) return;$id('bottompanel').style.display=data?'block':'none'; $id('bp_info').innerHTML=data }
 
 /* Get all the big images */
 const getImgList = _ => {
@@ -364,4 +382,3 @@ const insertlabels = (elems,type) => {
     }
 }
 const hideallimage = _ => { var imgs = $tag('img'); var i=0,l=imgs.length; for(i;i<l;i++) { imgs[i].style.opacity = 0 } }
-const timeout = s => new Promise((resolve, reject) => { tid = setTimeout(resolve, 1000*s, 'done');});

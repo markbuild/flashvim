@@ -50,4 +50,7 @@ Additional advanced browsing commands:
 :tf<Enter>         Translate to French
 
 ESC will clear any commands and will also exit insert modes.
+
+F4 disable/enable Flashvim on the domain of current page 
+
 ```
