@@ -1,15 +1,19 @@
 # flashvim
 ![](source/128.png?raw=true)
 
+Vim for Chrome and Firefox.
+
 https://addons.mozilla.org/en-US/firefox/addon/flashvim/
 
+### Operational Demo
 
-https://youtu.be/LQHhpkIytZo
+[Youtube](https://youtu.be/LQHhpkIytZo)
 
 [![IMAGE ALT TEXT HERE](https://i.ytimg.com/vi/LQHhpkIytZo/hqdefault.jpg)](https://youtu.be/LQHhpkIytZo)
 
-Vim for Chrome and Firefox.
+[操作演示腾讯视频](https://v.qq.com/txp/iframe/player.html?vid=o0839dm2abb)
 
+### Command
 ```
 Navigating the current page:
 
