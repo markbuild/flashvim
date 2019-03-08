@@ -18,8 +18,8 @@ if(disableflashvim) {
     document.addEventListener('keyup', event => { keyupHandler(event)}, true);
 } else {
     mlog('FlashVim enabled on this Page. Help >> https://github.com/markbuild/flashvim#readme');
-    document.addEventListener('keydown', event => {event.stopPropagation();keydownHandler(event)}, true);
-    document.addEventListener('keyup', event => {event.stopPropagation();keyupHandler(event)}, true);
+    document.addEventListener('keydown', event => { keydownHandler(event)}, true);
+    document.addEventListener('keyup', event => { keyupHandler(event)}, true);
     chrome.runtime.sendMessage({type:'getpatterns'}, response => {
         prev_patterns = response.prev
         next_patterns = response.next
