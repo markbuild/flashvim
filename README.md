@@ -11,7 +11,7 @@ https://addons.mozilla.org/en-US/firefox/addon/flashvim/
 
 [![IMAGE ALT TEXT HERE](https://i.ytimg.com/vi/LQHhpkIytZo/hqdefault.jpg)](https://youtu.be/LQHhpkIytZo)
 
-[操作演示腾讯视频](https://v.qq.com/txp/iframe/player.html?vid=o0839dm2abb)
+[操作演示![IMAGE ALT TEXT HERE](https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/TencentVideo.svg/250px-TencentVideo.svg.png)](https://v.qq.com/txp/iframe/player.html?vid=o0839dm2abb)
 
 ### Command
 ```
