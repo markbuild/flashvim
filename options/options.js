@@ -58,7 +58,7 @@ const loadfile = (event_this) => {
             render_patterns_table();
         });
     };
-    reader.readAsBinaryString(file);
+    reader.readAsText(file);
 };
 
 const add_new_map = () => {

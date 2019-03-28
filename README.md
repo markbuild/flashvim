@@ -63,3 +63,11 @@ ESC will clear any commands and will also exit insert modes.
 F4 disable/enable Flashvim on the domain of current page 
 
 ```
+
+
+### Screenshot
+
+![](screenshot/1.png?raw=true)
+
+![](screenshot/2.png?raw=true)
+
