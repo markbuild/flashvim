@@ -16,6 +16,7 @@ document.getElementById("reset_linkmap").addEventListener('click', (event) => { 
 document.getElementById("save_patterns").addEventListener('click', (event) => { save_patterns() }, false );
 document.getElementById("reset_patterns").addEventListener('click', (event) => { reset_patterns() }, false );
 document.getElementById("uploadbackupfile").addEventListener('change', (event) => {loadfile(event.target)}, false );
+document.getElementById("savesyninfo").addEventListener('click', (event) => {savesyninfo()}, false );
 
 const render_link_map_table = () => {
     var html='<tr><th>Key</th><th>Link</th></tr>';
@@ -41,7 +42,7 @@ const update_backup_link = () => {
     const blob = new Blob([str], {type: "text/json,charset=UTF-8"});
     const elem = document.getElementById("downloadbackup");
     elem.href = URL.createObjectURL(blob);
-    elem.download = "flash_vim_options" + parseInt(new Date().getTime()/1000) +".bak";
+    elem.download = "flashvim_database.bak";
 };
 
 const loadfile = (event_this) => {
@@ -107,3 +108,42 @@ const save_patterns= () => {
         render_patterns_table();
     });
 };
+
+const savesyninfo = _=> {
+    var synurl = document.getElementById("synurl").value;
+    var synusername = document.getElementById("synusername").value;
+    var synpassword = document.getElementById("synpassword").value;
+    if(synurl && synusername && synpassword) {
+        chrome.runtime.sendMessage({type:'saveSynInfo', synurl: synurl, synusername: synusername, synpassword: synpassword},function (response) {
+            if(response.success == 1){
+                alert('Synchronized successful')
+            }
+        });
+    } else {
+        alert('Please put the URL, the Username and Password')
+    }
+}
+function formatdate(_timestamp) {
+    var date = new Date(+_timestamp),
+        y = date.getFullYear(),
+        m = date.getMonth() + 1,
+        d = date.getDate(),
+        h = date.getHours(),
+        i = date.getMinutes(),
+        s = date.getSeconds();
+    m = m > 9? m : "0"+m;
+    d = d > 9? d: "0"+d;
+    h = h > 9? h: "0"+h;
+    i = i > 9? i: "0"+i;
+    s = s > 9? s: "0"+s;
+    return y + '-' + m + '-' + d + ' ' + h + ':' + i + ':' + s;
+}
+
+chrome.runtime.sendMessage({type:'getSynInfo'},function (response) {
+    if(response.success == 1) {
+        document.getElementById("synurl").value = response.synurl;
+        document.getElementById("synusername").value = response.synusername;
+        document.getElementById("synpassword").value = response.synpassword;
+        document.getElementById("last_syn_time").innerText = '(Last sync time: ' + formatdate(1000 * response.syntime) + ')';
+    }
+})
