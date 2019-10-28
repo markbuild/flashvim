@@ -18,10 +18,10 @@ https://addons.mozilla.org/en-US/firefox/addon/flashvim/
 Navigating the current page:
 
 :help              Help
-h                  Scroll left
+h                  Follow the link labeled 'previous' or '<'. Helpful for browsing paginated sites.
 j                  Scroll down
 k                  Scroll up
-l                  Scroll right
+l                  Follow the link labeled 'next' or '>'. Helpful for browsing paginated sites.
 gg                 Scroll to top of the page
 G                  Scroll to bottom of the page
 :e<Enter>          Reload current page
@@ -35,6 +35,7 @@ gt                 Go to previous tab
 :tabnew<Enter>     Open a new tab
 :q<Enter>          Close current tab
 :qa<Enter>         Close all tabs
+:tabm              Move the current tab page to after tab page N. 
 
 Navigating to new pages:
 
@@ -43,8 +44,6 @@ b                  Show/Hide label IDs
 {i}r               Redirect to the link which label ID is {i}
 {i}c               Click the element which label ID is {i}
 {i}f               Focus on the element which label ID is {i} 
-<Arrow Right>      Follow the link labeled 'next' or '>'. Helpful for browsing paginated sites.
-<Arrow Left>       Follow the link labeled 'previous' or '<'. Helpful for browsing paginated sites.
 .<key>.            Open the link which you stored in the linkmap by key
 
 Additional advanced browsing commands:
@@ -53,7 +52,6 @@ Additional advanced browsing commands:
 :imglist<Enter>    Display all the big original images on the bottom
 :hideimg<Enter>    Hide all the images
 :date<Enter>       Display the Date and Time
-:+jquery<Enter>    Insert jQuery Script
 :tc<Enter>         Translate to Chinese
 :te<Enter>         Translate to English
 :tf<Enter>         Translate to French

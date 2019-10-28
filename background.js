@@ -36,6 +36,16 @@ chrome.runtime.onMessage.addListener((request,sender,sendResponse) => {
                 }
             });
             break;
+        case 'tabm':
+            var _num = +request.tabIndex
+            chrome.tabs.query({active: true,currentWindow: true}, tabs => {
+                var current = tabs[0],
+                    currentTabId = current.id,
+                    currentIndex = current.index;
+                if(currentIndex < _num) _num--
+                chrome.tabs.move(currentTabId, {index: _num });
+            })
+            break;
         case 'changetab':
             updateAllTabs();
             var _index,_num,_direction;

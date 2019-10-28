@@ -41,3 +41,80 @@ a span.mk_vim_label{
     background: #ebebeb;
     padding: 15px;
 }
+#mk_seo_box{
+    background: white;
+    z-index: 9999999;
+    position: relative;
+}
+#mk_seo_box .serp-preview{
+    margin-top: 15px;
+    margin-bottom: 15px;
+    border-radius: 2px;
+    box-shadow: 0 0 5px 0 rgba(0,0,0,.12);
+    background-color: #fff;
+    border: 1px solid #e7e7e7;
+    padding: 30px;
+    max-width: 700px;
+}
+#mk_seo_box .serp-title{
+        color: #1a0dab;
+    cursor: pointer;
+    font-family: arial,regular;
+    font-size: 18px;
+    font-weight: 400;
+    text-align: left;
+    text-decoration: none;
+    visibility: visible;
+    white-space: nowrap;
+}
+#mk_seo_box .serp-description{
+    color: #545454;
+    font-family: arial,regular;
+    font-size: 13px;
+    font-weight: 400;
+    text-align: left;
+    visibility: visible;
+    word-wrap: break-word;
+}
+#mk_seo_box .serp-url{
+    color: #006621;
+    font-family: arial,regular;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 24px;
+    text-align: left;
+    visibility: visible;
+}
+#mk_seo_box .serp-arrow{
+    border-bottom-color: #006621;
+    border-bottom-style: solid;
+    border-bottom-width: 0;
+    border-left-color: transparent;
+    border-left-style: solid;
+    border-left-width: 4px;
+    border-right-color: transparent;
+    border-right-style: solid;
+    border-right-width: 4px;
+    border-top-color: #006621;
+    border-top-style: solid;
+    border-top-width: 5px;
+    color: gray;
+    cursor: default;
+    font-family: arial,sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    height: 0;
+    position: absolute;
+    line-height: 27px;
+    margin-left: 3px;
+    margin-top: 6px;
+    text-align: center;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    visibility: visible;
+    white-space: nowrap;
+    width: 0;
+}

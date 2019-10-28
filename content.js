@@ -1,7 +1,7 @@
 const $id = elem => document.getElementById(elem);
 const $tag = elem => document.getElementsByTagName(elem);
-const mlog = _info => {console.log('%c'+_info,"color:#fff;background-image:-webkit-gradient(linear, 0% 0%, 100% 100%, from(#3E6CD0), to(#C93856));border-radius:2px;padding:2px;font-weight:bold")}
-const updateInfoPanel = data => {if(!$id('bottompanel')) return;$id('bottompanel').style.display=data?'block':'none'; $id('bp_info').innerHTML=data }
+const updateInfoPanel = data => {if(!$id('bottompanel')) return;$id('bottompanel').style.display=data?'block':'none'; $id('bp_info').innerHTML=data.replace(new RegExp(' ','g'), '&nbsp;') }
+const isdisableflashvim = _=> (localStorage.getItem('DisableFlashVim') == 1)
 const timeout = s => new Promise((resolve, reject) => { tid = setTimeout(resolve, 1000*s, 'done');});
 if(navigator.userAgent.includes("Firefox")) {
     chrome = browser;
@@ -13,25 +13,19 @@ document.addEventListener("DOMContentLoaded", _ => {webinit()});
 var disableflashvim = localStorage.getItem('DisableFlashVim') == 1;
 var prev_patterns = '';
 var next_patterns = '';
-if(disableflashvim) {
-    mlog('FlashVim disabled on this Page. Help >> https://github.com/markbuild/flashvim#readme');
-    document.addEventListener('keyup', event => { keyupHandler(event)}, true);
-} else {
-    mlog('FlashVim enabled on this Page. Help >> https://github.com/markbuild/flashvim#readme');
-    //document.addEventListener('keydown', event => {event.stopPropagation();keydownHandler(event)}, true);
-    //document.addEventListener('keyup', event => {event.stopPropagation();keyupHandler(event)}, true);
-    document.addEventListener('keydown', event => {keydownHandler(event)}, false);
-    document.addEventListener('keyup', event => {keyupHandler(event)}, false);
-    chrome.runtime.sendMessage({type:'getpatterns'}, response => {
-        prev_patterns = response.prev
-        next_patterns = response.next
-    });
-}
+console.log('%cFlashVim Help >> https://github.com/markbuild/flashvim#readme', "color:#fff;background-image:linear-gradient(90deg, #3E6CD0,#C93856 58px, #444 58px);padding:2px;")
+
+document.addEventListener('keydown', event => {keydownHandler(event)}, false);
+document.addEventListener('keyup', event => {keyupHandler(event)}, false);
+chrome.runtime.sendMessage({type:'getpatterns'}, response => {
+    prev_patterns = response.prev
+    next_patterns = response.next
+});
 /***+++++++++++++++++++ Event Processor ++++++++++++++++++++++++++++***/
 const webinit = _ => {
     const bottomPanel= document.createElement("div");
     bottomPanel.id='bottompanel';
-    bottomPanel.innerHTML='<div id="bp_info"></div>';
+    bottomPanel.innerHTML='<div id="bp_info" onmouseover="this.parentElement.style.display=\'none\'"></div>';
     if(document.body == null) return false;
     var first=document.body.firstChild;
     document.body.insertBefore(bottomPanel,first);
@@ -46,15 +40,16 @@ var labelindex = 0;
 var tid=0; // Timeout_ID
 const keyupHandler = event => {
     if(event.keyCode == 115) {
-        if(disableflashvim) {
+        if(isdisableflashvim()) {
             localStorage.setItem('DisableFlashVim', 0)
             updateInfoPanel('<span style="color:#FFEB3B">Flashvim Enabled</span>')
         } else {
             localStorage.setItem('DisableFlashVim', 1)
             updateInfoPanel('<span style="color:#FFEB3B">Flashvim Disabled</span>')
+            timeout(1).then(_ =>{ updateInfoPanel('') });
         }
-        timeout(1).then(_ =>{ location = location });
     }
+    if(isdisableflashvim()) return
     if(event.keyCode == 16) {
         Shift = false;
     }
@@ -67,6 +62,7 @@ const keyupHandler = event => {
     }
 }
 const keydownHandler = event => {
+    if(isdisableflashvim()) return
     clearTimeout(tid);
     if(insert_mode) {
         updateInfoPanel('<span style="color:#FFEB3B">-- INSERT --</span>');
@@ -80,7 +76,7 @@ const keydownHandler = event => {
         return;
     }
     // Prev Page
-    if(event.keyCode==37) { // Arrow Left
+    if(event.keyCode==37 || (event.keyCode==72 && cmd == '')) { // Arrow Left or h
         var p = prev_patterns.split(',');
         var taga = document.getElementsByTagName('a');
         var alen=taga.length;
@@ -99,7 +95,7 @@ const keydownHandler = event => {
         return;
     }
     // Next Page
-    if(event.keyCode==39) {// Arrow right 
+    if(event.keyCode==39 || (event.keyCode==76 && cmd == '')) {// Arrow right 
         var p = next_patterns.split(',');
         var taga=document.getElementsByTagName('a');
         var alen=taga.length;
@@ -120,6 +116,7 @@ const keydownHandler = event => {
     switch(event.keyCode){
         case 16:cmd+='';Shift = true;return;// Shift
         case 20:CapsLock = !CapsLock;return;// Caps Lock
+        case 32:cmd+=' ';break;// spacebar
         case 96:cmd+='0';break;//numpad 0
         case 97:cmd+='1';break;
         case 98:cmd+='2';break;
@@ -223,14 +220,14 @@ const keydownHandler = event => {
                 hideallimage();cmd='';break;
             case ':date':
                 cmd='';updateInfoPanel(new Date()).toString().slice(0,24);break;
-            case ':+jquery':
-                var script = document.createElement('script');
-                script.setAttribute('src', location.protocol+"//ajax.aspnetcdn.com/ajax/jQuery/jquery-1.9.1.js");
-                mlog('insert iQuery Script');
-                $tag('head')[0].appendChild(script);cmd='';break;
             case ':help':
                 cmd='';open('https://github.com/markbuild/flashvim/blob/master/README.md#readme');break;
-
+            case ':seo':
+                cmd='';getseoinfo();break;
+            default:
+                if(cmd.match(/^:tabm\s[0-9]+$/)) {
+                    chrome.runtime.sendMessage({type:'tabm', tabIndex:cmd.slice(5)});
+                }
         }
         cmd='';updateInfoPanel('')
     } else {
@@ -289,14 +286,10 @@ const keydownHandler = event => {
                     $id('dokuwiki__pagetools').getElementsByTagName("a")[0].click()
                 }
                 cmd='';break;
-            case 'h': // Scroll Left 
-                window.scrollTo(document.documentElement.scrollLeft-window.screen.width/2,document.documentElement.scrollTop);cmd='';break;
             case 'j': // Scroll Down
                 window.scrollTo(document.documentElement.scrollLeft,document.documentElement.scrollTop+window.screen.height/2);cmd='';break;
             case 'k': // Scroll Up
                 window.scrollTo(document.documentElement.scrollLeft,document.documentElement.scrollTop-window.screen.height/2);cmd='';break;
-            case 'l': // Scroll Left 
-                window.scrollTo(document.documentElement.scrollLeft+window.screen.width/2,document.documentElement.scrollTop);cmd='';break;
             case 'x':
                 try{document.getSelection().anchorNode.parentNode.innerHTML=document.getSelection().anchorNode.textContent.replace(document.getSelection().toString(),"");} catch(err){} cmd=''; break;
         }
@@ -334,7 +327,31 @@ const keydownHandler = event => {
 }
 
 /*++++++++++++++++++++ Helper Function +++++++++++++++++++++++*/
+/* Get SEO info */
+const getseoinfo = _ => {
+    var html ='<h1>SEO Information</h1>' +
+              '<h3>Title & URL & meta description(25 ~ 165 characters)</h3><div class="serp-preview">' + 
+              '<div class="serp-title">' + document.title.replace(/(^.+\s-\s)/,'') + '</div>' +
+              '<div class="serp-url">' + location.origin + location.pathname + '<span class="serp-arrow"></span></div>' +
+              '<div class="serp-description">' + document.head.querySelector("meta[name='description']").content + '</div></div>' +
+              '<h3>Keywords</h3>' + document.head.querySelector("meta[name='keywords']").content + '</p>';
+    html += '<h3>h1</h3>';
+    document.querySelectorAll('h1').forEach(function(_elem){ html += '<p>'+_elem.innerText + '</p>'} );
+    html += '<h3>h2</h3>';
+    document.querySelectorAll('h2').forEach(function(_elem){ html += '<p>'+_elem.innerText + '</p>'} );
+    html += '<h3>img alt</h3><table>';
+    document.querySelectorAll('img').forEach(function(_elem){ html += '<tr><td>'+_elem.alt + '</td><td><img style="max-width:100px" src="' + _elem.src + '"></td><td>'+_elem.src+'</td></tr>'} );
+    html += '</table><h3>Anchor Text</h3><table>';
+    document.querySelectorAll('a').forEach(function(_elem){ if(_elem.href.startsWith('http')) { html += '<tr><td>' + _elem.href + '</td><td>' + _elem.title + '</td><td>' + _elem.innerText + '</td><td>' + _elem.parentElement.innerText + '</td></tr>'}} );
+    html += '</table>';
+    if(!$id('mk_seo_box')){
+        let new_elem = document.createElement("div");
+        new_elem.id="mk_seo_box";
+        document.body.appendChild(new_elem);
+    }
+    $id('mk_seo_box').innerHTML = html;
 
+}
 /* Get all the big images */
 const getImgList = _ => {
     var imgs = $tag('img');
