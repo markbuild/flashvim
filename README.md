@@ -31,11 +31,11 @@ Manipulating tabs:
 gT                 Go to next tab
 gt                 Go to previous tab
 1gt                Go to the first tab
-{i}gt              Go to tab in position i
+{i}gt              Go to tab in position {i}
 :tabnew<Enter>     Open a new tab
 :q<Enter>          Close current tab
 :qa<Enter>         Close all tabs
-:tabm              Move the current tab page to after tab page N. 
+:tabm {i}<Enter>   Move the current tab page to after tab page {i}. 
 
 Navigating to new pages:
 
