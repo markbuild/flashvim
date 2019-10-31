@@ -185,7 +185,7 @@ const keydownHandler = event => {
             case ':qa': // Close all tabs
             case ';qa': // Fault tolerance 
                 chrome.runtime.sendMessage({type:'removealltab'});break;
-            case ":sav": 
+            case ":w": 
                 if(location.pathname.match(/doku\.php/)){ // work for dokuwiki
                     $id("edbtn__save").click();
                 }
