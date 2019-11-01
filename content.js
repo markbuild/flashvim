@@ -1,6 +1,6 @@
 const $id = elem => document.getElementById(elem);
 const $tag = elem => document.getElementsByTagName(elem);
-const updateInfoPanel = data => {if(!$id('bottompanel')) return;$id('bottompanel').style.display=data?'block':'none'; $id('bp_info').innerHTML=data.replace(new RegExp(' ','g'), '&nbsp;') }
+const updateInfoPanel = data => {if(!$id('bottompanel')) return;$id('bottompanel').style.display=data?'block':'none'; console.log(data);$id('bp_info').innerHTML=data.replace(new RegExp(' ','g'), '&nbsp;') }
 const isdisableflashvim = _=> (localStorage.getItem('DisableFlashVim') == 1)
 const timeout = s => new Promise((resolve, reject) => { tid = setTimeout(resolve, 1000*s, 'done');});
 if(navigator.userAgent.includes("Firefox")) {
@@ -189,9 +189,13 @@ const keydownHandler = event => {
                 if(location.pathname.match(/doku\.php/)){ // work for dokuwiki
                     $id("edbtn__save").click();
                 }
+                cmd='';updateInfoPanel('')
                 break;
             case ';tabnew':
-            case ':tabnew': window.open(''); break;
+            case ':tabnew': 
+                cmd='';updateInfoPanel('')
+                window.open(''); 
+                break;
 
             case ':tc'://Google Translate:to Chinese
                 if(location.host.startsWith('translate.google.com')) {
@@ -199,37 +203,49 @@ const keydownHandler = event => {
                 } else if(location.href.startsWith('http')) {
                     open('https://translate.google.com/translate?sl=auto&tl=zh-CN&u='+location.href);
                 }
-                cmd='';break;
+                cmd='';updateInfoPanel('')
+                break;
             case ':te'://Google Translate:to English
                 if(location.host.startsWith('translate.google.com')) {
                     location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=en&text='+$id('source').value;
                 } else if(location.href.startsWith('http')) {
                     open('https://translate.google.com/translate?sl=auto&tl=en&u='+location.href);
                 }
-                cmd='';break;
+                cmd='';updateInfoPanel('')
+                break;
             case ':tf'://Google Translate:to French 
                 if(location.host.startsWith('translate.google.com')) {
                     location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=fr&text='+$id('source').value;
                 } else if(location.href.startsWith('http')) {
                     open('https://translate.google.com/translate?sl=auto&tl=fr&u='+location.href);
                 }
-                cmd='';break;
+                cmd='';updateInfoPanel('')
+                break;
             case ':imglist'://Display all the big original images on the bottom
-                getImgList(); cmd='';break;
+                getImgList(); 
+                cmd='';updateInfoPanel('')
+                break;
             case ':hideimg'://Hide all the images
-                hideallimage();cmd='';break;
-            case ':date':
-                cmd='';updateInfoPanel(new Date()).toString().slice(0,24);break;
+                hideallimage();
+                cmd='';updateInfoPanel('')
+                break;
+            case ':!date':
+                cmd='';updateInfoPanel(new Date().toString().slice(0,24));
+                break;
             case ':help':
-                cmd='';open('https://github.com/markbuild/flashvim/blob/master/README.md#readme');break;
+                open('https://github.com/markbuild/flashvim/blob/master/README.md#readme');
+                cmd='';updateInfoPanel('')
+                break;
             case ':seo':
-                cmd='';getseoinfo();break;
+                getseoinfo();
+                cmd='';updateInfoPanel('')
+                break;
             default:
                 if(cmd.match(/^:tabm\s[0-9]+$/)) {
                     chrome.runtime.sendMessage({type:'tabm', tabIndex:cmd.slice(5)});
                 }
+                cmd='';updateInfoPanel('')
         }
-        cmd='';updateInfoPanel('')
     } else {
         switch(cmd){
             case '/'://Search
@@ -329,6 +345,7 @@ const keydownHandler = event => {
 /*++++++++++++++++++++ Helper Function +++++++++++++++++++++++*/
 /* Get SEO info */
 const getseoinfo = _ => {
+  try {
     var html ='<h1>SEO Information</h1>' +
               '<h3>Title & URL & meta description(25 ~ 165 characters)</h3><div class="serp-preview">' + 
               '<div class="serp-title">' + document.title.replace(/(^.+\s-\s)/,'') + '</div>' +
@@ -350,7 +367,8 @@ const getseoinfo = _ => {
         document.body.appendChild(new_elem);
     }
     $id('mk_seo_box').innerHTML = html;
-
+  } catch(e) {
+  }
 }
 /* Get all the big images */
 const getImgList = _ => {
