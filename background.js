@@ -1,85 +1,67 @@
-if(!localStorage.getItem('linkmap')) { // Init Setting
-    localStorage.setItem('linkmap', JSON.stringify({
-        "gh":"https://github.com",
-        "lorem":"http://lipsum.com/",
-        "json":"https://jsonlint.com/",
-        "ptm":"https://mail.protonmail.com/",
-        "favicon":"https://www.favicon-generator.org/",
-        "gg":"https://www.google.com/",
-        "tt":"https://twitter.com/",
-        "fv":"https://github.com/markbuild/flashvim"
-    }));
-}
-if(!localStorage.getItem('patterns')) { // Init Setting
-    localStorage.setItem('patterns', JSON.stringify({
-        "prev":"prev,<,‹,←,«,<<,上一页,前页",
-        "next":"next,>,›,→,»,>>,下一页,后页"
-    }));
-}
-if(navigator.userAgent.includes("Firefox")) {
+if (navigator.userAgent.includes("Firefox")) { // 兼容Firefox
     chrome = browser;
 } 
+
 chrome.runtime.onMessage.addListener((request,sender,sendResponse) => {
     switch(request.type) {
-        case 'removecurrenttab':
+        case 'closeCurrentTab':
             chrome.tabs.query({active: true, currentWindow: true}, tabs => {
                 const current = tabs[0]
-                //alert(current.id)
-                //alert(current.index)
-                chrome.tabs.remove(current.id);//Remove current tab
-            });
-            break;
-        case 'removealltab':
+                chrome.tabs.remove(current.id) // Remove current tab
+            })
+            break
+        case 'closeAllTab':
             chrome.tabs.query({}, tabs => {
                 for (let i = 0; i < tabs.length; i++) {
-                    chrome.tabs.remove(tabs[i].id);
+                    chrome.tabs.remove(tabs[i].id)
                 }
             });
             break;
         case 'tabm':
             var _num = +request.tabIndex
-            chrome.tabs.query({active: true,currentWindow: true}, tabs => {
+            chrome.tabs.query({active: true, currentWindow: true}, tabs => {
                 var current = tabs[0],
                     currentTabId = current.id,
-                    currentIndex = current.index;
+                    currentIndex = current.index
                 if(currentIndex < _num) _num--
-                chrome.tabs.move(currentTabId, {index: _num });
+                chrome.tabs.move(currentTabId, {index: _num })
             })
             break;
         case 'changetab':
-            updateAllTabs();
-            var _index,_num,_direction;
-            if(request.num){ 
-                _num = request.num; 
-            } else if(request.direction){ 
-                _direction= request.direction;
+            updateAllTabs()
+            var _index,_num,_direction
+            if (request.num) { 
+                _num = request.num
+            } else if(request.direction) {
+                _direction= request.direction
             }
-            chrome.tabs.query({active: true,currentWindow: true}, tabs => {
+            chrome.tabs.query({active: true, currentWindow: true}, tabs => {
                 var current = tabs[0],
                     tabId = current.id,
-                    currentIndex = current.index;
+                    currentIndex = current.index
                 chrome.tabs.query({currentWindow: true}, tabs => {
                     if(_num) 
-                        _index = _num-1;
+                        _index = _num-1
                     else
-                        _index = (currentIndex+_direction) % tabs.length;
+                        _index = (currentIndex +_direction) % tabs.length;
                     chrome.tabs.query({index: _index}, function(tabs){
                         if (tabs.length) {
                             var tabToActivate = tabs[0],
-                                tabToActivate_Id = tabToActivate.id;
-                            chrome.tabs.update(tabToActivate_Id, {active: true});
+                                tabToActivate_Id = tabToActivate.id
+                            chrome.tabs.update(tabToActivate_Id, { active: true })
                         }
                     });
                 });
             });
             break;
         case 'getlink':
-            sendResponse(JSON.parse(localStorage.getItem('linkmap'))[request.cmd]);
+            sendResponse(getlinkmap()[request.cmd])
             break;
         case 'getlinkmap':
-            sendResponse(JSON.parse(localStorage.getItem('linkmap')));
+            sendResponse(getlinkmap())
             break;
         case 'setlinkmap':
+            if (!request.linkmap) return false
             localStorage.setItem('linkmap', JSON.stringify(request.linkmap));
             sendResponse(JSON.parse(localStorage.getItem('linkmap')));
             if(localStorage.getItem('synurl')){ // 异步任务
@@ -87,12 +69,13 @@ chrome.runtime.onMessage.addListener((request,sender,sendResponse) => {
             }
             break;
         case 'getpatterns':
-            sendResponse(JSON.parse(localStorage.getItem('patterns')));
+            sendResponse(getpatterns())
             break;
         case 'setpatterns':
-            localStorage.setItem('patterns', JSON.stringify(request.patterns));
-            sendResponse(JSON.parse(localStorage.getItem('patterns')));
-            if(localStorage.getItem('synurl')){ // 异步任务
+            if (!request.patterns) return false
+            localStorage.setItem('patterns', JSON.stringify(request.patterns))
+            sendResponse(JSON.parse(localStorage.getItem('patterns')))
+            if(localStorage.getItem('synurl')) { // 异步任务
                 sync_write();
             }
             break;
@@ -103,14 +86,14 @@ chrome.runtime.onMessage.addListener((request,sender,sendResponse) => {
                     localStorage.setItem('patterns', JSON.stringify(_res.patterns))
                 })
             }
-            let synurl = request.synurl;
-            let synusername = request.synusername;
-            let synpassword = request.synpassword;
+            let synurl = request.synurl
+            let synusername = request.synusername
+            let synpassword = request.synpassword
             localStorage.setItem('synurl', synurl)
             localStorage.setItem('synusername', synusername)
             localStorage.setItem('synpassword', synpassword)
             localStorage.setItem('syntime', parseInt(new Date().getTime()/1000))
-            doSomethingWith().then(sendResponse({success: 1}));
+            doSomethingWith().then(sendResponse({success: 1}))
             break;
         case 'getSynInfo':
             if(localStorage.getItem('synurl')){
@@ -118,10 +101,33 @@ chrome.runtime.onMessage.addListener((request,sender,sendResponse) => {
             } else {
                 sendResponse({success: 0 })
             }
-            break;
+            break
 
     }
-});
+})
+
+const getlinkmap = () => {
+    if(!localStorage.getItem('linkmap')) { // Init Setting
+        localStorage.setItem('linkmap', JSON.stringify({
+            "gh":"https://github.com",
+            "gg":"https://www.google.com/",
+            "tt":"https://twitter.com/",
+            "fv":"https://h.markbuild.com/flashvim.html"
+        }))
+    }
+    return JSON.parse(localStorage.getItem('linkmap'))
+}
+const getpatterns = () => {
+    if(!localStorage.getItem('patterns')) { // Init Setting
+        localStorage.setItem('patterns', JSON.stringify({
+            "prev":"prev, <, ‹, ←, «, <<, 上一页, 前页",
+            "next":"next, >, ›, →, », >>, 下一页, 后页",
+            "search":"search, kw, keyword, 搜索"
+        }));
+    }
+    return JSON.parse(localStorage.getItem('patterns'))
+}
+
 /***
   ++++++++++++++++++++++++++++++++
   +++     2015 tabnumber       +++
@@ -166,10 +172,10 @@ const updateAllTabs = _ => {
     return true;
 }
 chrome.tabs.onCreated.addListener(Id => {
-    updateAllTabs();
+    updateAllTabs()
 });
 chrome.tabs.onUpdated.addListener((Id, changeInfo, tab) => {
-    updateAllTabs();
+    updateAllTabs()
 });
 chrome.tabs.onActivated.addListener(Id => {
     updateAllTabs();

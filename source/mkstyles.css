@@ -1,6 +1,8 @@
-#bottompanel{bottom:15px;right:15px;z-index: 2147483647;position: fixed;display:none}
-#bp_info{padding:0 10px;color:#fff;background:#0000BF;font-size:72px;font-family:Arial,Helvetica,sans-serif;line-height:72px;height: 82px;border:2px solid #e2e2e2}
-span.mk_vim_label{/*!important:top priority*/
+#flashvim_info_panel{ bottom:15px; left: 15px; z-index: 2147483647; position: fixed; display: none}
+#flashvim_info{ padding: 0 10px; color:#fff; background:#0000BF; font-size: 72px; font-family: Arial, Helvetica, sans-serif; line-height:72px; height: 82px;  background-image: linear-gradient(134deg, rgba(0, 0, 119, 1), #9C27B0); opacity:0.9 }
+#flashvim_info .success{color: greenyellow}
+#flashvim_info .warn {color: orange}
+span.flashvim_label{/*!important: top priority*/
     box-sizing: border-box !important;
     z-index:2147483647 !important;
 	position: absolute !important; 
@@ -20,19 +22,19 @@ span.mk_vim_label{/*!important:top priority*/
     font-weight: bold !important;
     text-align: center !important;
 }
-a span.mk_vim_label{
+a span.flashvim_label {
     background:red !important;
     text-shadow: 1px 1px 0px #333 !important;
 	color: #fff !important;
 	border: 1px solid #fff !important; 
 } 
+#flashvim_options input{ border: 1px solid #000; padding:2px 5px; font-size:12px}
 
-#mk_options input{border: 1px solid #000;padding:2px 5px;font-size:12px}
-#mk_options .link input{width: 500px;}
-#mk_options .key input{}
-#mk_options .new input{border: 1px solid darkred;}
-#mk_options tr button{color:red;cursor:pointer}
-#mk_options .box {
+#flashvim_options .link input{width: 500px;}
+#flashvim_options .key input{}
+#flashvim_options .new input{border: 1px solid darkred;}
+#flashvim_options tr button{color:red;cursor:pointer}
+#flashvim_options .box {
     border: 1px solid #000;
     float: left;
     width: 300px;
@@ -41,12 +43,12 @@ a span.mk_vim_label{
     background: #ebebeb;
     padding: 15px;
 }
-#mk_seo_box{
+#flashvim_seo_box{
     background: white;
     z-index: 9999999;
     position: relative;
 }
-#mk_seo_box .serp-preview{
+#flashvim_seo_box .serp-preview{
     margin-top: 15px;
     margin-bottom: 15px;
     border-radius: 2px;
@@ -56,8 +58,8 @@ a span.mk_vim_label{
     padding: 30px;
     max-width: 700px;
 }
-#mk_seo_box .serp-title{
-        color: #1a0dab;
+#flashvim_seo_box .serp-title{
+    color: #1a0dab;
     cursor: pointer;
     font-family: arial,regular;
     font-size: 18px;
@@ -67,7 +69,7 @@ a span.mk_vim_label{
     visibility: visible;
     white-space: nowrap;
 }
-#mk_seo_box .serp-description{
+#flashvim_seo_box .serp-description{
     color: #545454;
     font-family: arial,regular;
     font-size: 13px;
@@ -76,7 +78,7 @@ a span.mk_vim_label{
     visibility: visible;
     word-wrap: break-word;
 }
-#mk_seo_box .serp-url{
+#flashvim_seo_box .serp-url{
     color: #006621;
     font-family: arial,regular;
     font-size: 14px;
@@ -86,7 +88,7 @@ a span.mk_vim_label{
     text-align: left;
     visibility: visible;
 }
-#mk_seo_box .serp-arrow{
+#flashvim_seo_box .serp-arrow{
     border-bottom-color: #006621;
     border-bottom-style: solid;
     border-bottom-width: 0;
