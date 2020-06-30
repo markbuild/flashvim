@@ -18,6 +18,7 @@ const flashvim = {
     prevPatterns: '',
     nextPatterns: '',
     searchPatterns: '',
+    savePatterns: '',
     tid: 0, // timeout ID
     timeout: s => new Promise((resolve, reject) => { this.tid = setTimeout(resolve, 1000 * s, 'done') }),
     clearTimeout: _ => { clearTimeout(this.tid) }
@@ -27,6 +28,7 @@ chrome.runtime.sendMessage({type:'getpatterns'}, response => { // 初始化上/�
     flashvim.prevPatterns = response.prev
     flashvim.nextPatterns = response.next
     flashvim.searchPatterns = response.search
+    flashvim.savePatterns = response.save
 })
 
 /***+++++++++++++++++++ Methods ++++++++++++++++++++++++++++***/
@@ -113,11 +115,22 @@ flashvim.commandHandler = function(_type) {
             case ';qa': // Fault tolerance 
                 chrome.runtime.sendMessage({type:'closeAllTab'});break;
             case ":w": 
-                if(location.pathname.match(/doku\.php/)){ // work for dokuwiki
-                    $id("edbtn__save").click();
+                let saveBtns = qSA('input[type=submit], input[type=button],button')
+                let patterns = this.savePatterns.split(',')
+                for (let key = 0; key < saveBtns.length; key++) {
+                    for (let i in patterns) {
+                        if (saveBtns[key].outerHTML.replace(/\s*/g, '').includes(patterns[i].trim())) {
+                            setTimeout(function() {
+                                saveBtns[key].click()
+                            }, 100)
+                            this.cmd = ''
+                            return
+                        }
+
+                    }
                 }
-                cmd='';this.updateInfoPanel('')
-                break;
+                this.cmd = ''
+                return
             case ';tabnew':
             case ':tabnew': 
                 window.open(''); break
@@ -173,6 +186,7 @@ flashvim.commandHandler = function(_type) {
         this.cmd = ''
     } else {
         switch(this.cmd) {
+            case '?':
             case '/': // Search
                 var taginput = document.getElementsByTagName('input')
                 var inputlen = taginput.length
@@ -187,7 +201,7 @@ flashvim.commandHandler = function(_type) {
                     }
                     if (taginput[key].type == "" || taginput[key].type === 'text') {
                         for (let i in patterns) {
-                            if (taginput[key].outerHTML.includes(patterns[i].trim())) {
+                            if (taginput[key].outerHTML.replace(/\s*/g, '').includes(patterns[i].trim())) {
                                 setTimeout(function() {
                                     taginput[key].focus()
                                 }, 100)
@@ -234,23 +248,29 @@ flashvim.commandHandler = function(_type) {
                 }
                 this.cmd = ''
                 return
-            case 'i':  // 编辑模式
-                if (location.pathname.match(/doku\.php/)) { // For dokuwiki
-                    $id('dokuwiki__pagetools').getElementsByTagName("a")[0].click()
-                }
+            case 'h': // Scroll Left
+                window.scrollTo(document.documentElement.scrollLeft - window.screen.width/2, document.documentElement.scrollTop)
                 this.cmd = ''
                 return
             case 'j': // Scroll Down
-                window.scrollTo(document.documentElement.scrollLeft,document.documentElement.scrollTop+window.screen.height/2)
+                window.scrollTo(document.documentElement.scrollLeft, document.documentElement.scrollTop + window.screen.height/2)
                 this.cmd = ''
                 return
             case 'k': // Scroll Up
-                window.scrollTo(document.documentElement.scrollLeft,document.documentElement.scrollTop-window.screen.height/2)
+                window.scrollTo(document.documentElement.scrollLeft, document.documentElement.scrollTop - window.screen.height/2)
+                this.cmd = ''
+                return
+            case 'l': // Scroll Right
+                window.scrollTo(document.documentElement.scrollLeft + window.screen.width/2, document.documentElement.scrollTop)
                 this.cmd = ''
                 return
             case 'x':
                 try {
-                    document.getSelection().anchorNode.parentNode.innerHTML=document.getSelection().anchorNode.textContent.replace(document.getSelection().toString(),"")
+                    let n = document.getSelection().anchorNode.data
+                    let s = document.getSelection()
+                    let start = Math.min(s.anchorOffset, s.focusOffset)
+                    let len = s.toString().length
+                    document.getSelection().anchorNode.data = n.slice(0, start) + n.slice(start + len)
                 } catch (e) {}
                 this.cmd = ''
                 return
@@ -358,7 +378,7 @@ flashvim.cancelHideAllImage = function() {
         elem.style.opacity = 1
     })
 }
-flashvim.keyupHandler = function() {
+flashvim.keyupHandler = function(event) {
     if (event.keyCode == 115) { // F4
         var DisableFlashVimPages = localStorage.getItem('DisableFlashVimPages') ? JSON.parse(localStorage.getItem('DisableFlashVimPages')) : []
         if (this.disable) {

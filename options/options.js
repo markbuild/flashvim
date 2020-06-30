@@ -34,6 +34,7 @@ const render_patterns_table = () => {
     document.getElementById("prev_patterns").value = patterns.prev
     document.getElementById("next_patterns").value = patterns.next
     document.getElementById("search_patterns").value = patterns.search
+    document.getElementById("sav_patterns").value = patterns.save
     update_backup_link()
 }
 
@@ -107,7 +108,8 @@ const save_patterns= () => {
     patterns = {
         "prev":document.getElementById("prev_patterns").value.toLocaleLowerCase(),
         "next":document.getElementById("next_patterns").value.toLocaleLowerCase(),
-        "search":document.getElementById("search_patterns").value.toLocaleLowerCase()
+        "search":document.getElementById("search_patterns").value.toLocaleLowerCase(),
+        "save":document.getElementById("sav_patterns").value.toLocaleLowerCase()
     }
     chrome.runtime.sendMessage({ type:'setpatterns', patterns:patterns },
     function (response) {
