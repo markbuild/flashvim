@@ -1,8 +1,7 @@
-console.log('%cMore about FlashVim >> https://h.markbuild.com/flashvim.html', "color:#fff;background-image:linear-gradient(90deg, #3E6CD0,#C93856 58px, #444 58px);padding:2px;")
+console.log('%cMore about FlashVim >> https://h.markbuild.com/flashvim.html', "color:#fff;background-image:linear-gradient(90deg, #3E6CD0,#C93856 130px, #444 130px);padding:2px;")
 if (navigator.userAgent.includes("Firefox")) { // 兼容Firefox
-    isFirefox = true
-    chrome = browser;
-} 
+    chrome = browser
+}
 
 /***+++++++++++++++++++ Data init  ++++++++++++++++++++++++++++***/
 const $id = _id => document.getElementById(_id)
@@ -225,15 +224,15 @@ flashvim.commandHandler = function(_type) {
                 this.cmd = ''
                 return
             case 'gt': // Go to next tab
-                if (isFirefox || typeof chrome.app.isInstalled!=="undefined") {
+                try {
                     chrome.runtime.sendMessage({ type:'changetab', direction: 1 })
-                }
+                } catch(e) {}
                 this.cmd = ''
                 return
             case 'gT': // Go to previous tab
-                if (isFirefox || typeof chrome.app.isInstalled!=="undefined") {
+                try {
                     chrome.runtime.sendMessage({ type:'changetab', direction: -1 })
-                }
+                } catch(e) {}
                 this.cmd = ''
                 return
             case 'G': // Scroll to Bottom of the Page
@@ -284,9 +283,9 @@ flashvim.commandHandler = function(_type) {
                         this.cmd = ''
                     })
                 } else if (this.cmd.match(/^\d+gt$/)) { // Go to tab in position \d
-                    if (isFirefox || typeof chrome.app.isInstalled!=="undefined") {
+                    try {
                         chrome.runtime.sendMessage({ type:'changetab', num: this.cmd.slice(0,-2) })
-                    }
+                    } catch(e) {}
                     this.cmd = ''
                 } else if (this.cmd.match(/^\d+r$/)) { // [r]edirect to the link which label ID  is \d
                     window.location.href = $id('flashvim_label' + this.cmd.slice(0,-1)).parentElement.href
@@ -393,8 +392,8 @@ flashvim.keyupHandler = function(event) {
             DisableFlashVimPages.push(currentPage)
             localStorage.setItem('DisableFlashVimPages', JSON.stringify(DisableFlashVimPages))
             this.updateInfoPanel('Flashvim Disabled', 'warn').timeout(1).then(_ => { this.hideInfoPanel() })
-            this.disable = !this.disable
         }
+        this.disable = !this.disable
     }
     if (this.disable) return
     if (event.keyCode == 27){ // ESC
