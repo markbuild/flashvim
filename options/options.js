@@ -31,10 +31,10 @@ const render_link_map_table = () => {
     update_backup_link()
 }
 const render_patterns_table = () => {
-    document.getElementById("prev_patterns").value = patterns.prev
-    document.getElementById("next_patterns").value = patterns.next
-    document.getElementById("search_patterns").value = patterns.search
-    document.getElementById("sav_patterns").value = patterns.save
+    document.getElementById("prev_patterns").value = patterns.prev || ''
+    document.getElementById("next_patterns").value = patterns.next || ''
+    document.getElementById("search_patterns").value = patterns.search || ''
+    document.getElementById("sav_patterns").value = patterns.save || ''
     update_backup_link()
 }
 

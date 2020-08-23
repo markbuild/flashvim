@@ -107,12 +107,16 @@ flashvim.commandHandler = function(_type) {
             case ';x': // Fault tolerance 
             case ':q': // Quit this tab, close tab
             case ';q': // Fault tolerance 
-                chrome.runtime.sendMessage({type:'closeCurrentTab'});break;
+                try {
+                    chrome.runtime.sendMessage({type:'closeCurrentTab'});break;
+                } catch(e) {}
             case ':xa': // Close all tabs
             case ';xa': // Fault tolerance 
             case ':qa': // Close all tabs
             case ';qa': // Fault tolerance 
-                chrome.runtime.sendMessage({type:'closeAllTab'});break;
+                try {
+                    chrome.runtime.sendMessage({type:'closeAllTab'});break;
+                } catch(e) {}
             case ":w": 
                 let saveBtns = qSA('input[type=submit], input[type=button],button')
                 let patterns = this.savePatterns.split(',')
@@ -179,7 +183,9 @@ flashvim.commandHandler = function(_type) {
                 break
             default:
                 if (this.cmd.match(/^:tabm\s[0-9]+$/)) {
-                    chrome.runtime.sendMessage({type:'tabm', tabIndex:cmd.slice(5)})
+                    try {
+                        chrome.runtime.sendMessage({type:'tabm', tabIndex:cmd.slice(5)})
+                    } catch(e) {}
                 }
         }
         this.cmd = ''
@@ -215,7 +221,7 @@ flashvim.commandHandler = function(_type) {
                 return
             case 'dd':
                 try{
-                    document.getSelection().anchorNode.parentNode.innerHTML=''
+                    document.getSelection().getRangeAt(0).commonAncestorContainer.remove()
                 } catch (e) {}
                 this.cmd = ''
                 return
@@ -265,23 +271,21 @@ flashvim.commandHandler = function(_type) {
                 return
             case 'x':
                 try {
-                    let n = document.getSelection().anchorNode.data
-                    let s = document.getSelection()
-                    let start = Math.min(s.anchorOffset, s.focusOffset)
-                    let len = s.toString().length
-                    document.getSelection().anchorNode.data = n.slice(0, start) + n.slice(start + len)
+                    let n = document.getSelection().deleteFromDocument()
                 } catch (e) {}
                 this.cmd = ''
                 return
             default:
                 if (this.cmd.match(/^\.\w+\.$/)) { //If match the key of linkmap
-                    chrome.runtime.sendMessage({
-                        type: 'getlink',
-                        cmd: this.cmd.slice(1,-1)
-                    }, response => {
-                        response != null ? open(response) : 0
-                        this.cmd = ''
-                    })
+                    try {
+                        chrome.runtime.sendMessage({
+                            type: 'getlink',
+                            cmd: this.cmd.slice(1,-1)
+                        }, response => {
+                            response != null ? open(response) : 0
+                            this.cmd = ''
+                        })
+                    } catch(e) {}
                 } else if (this.cmd.match(/^\d+gt$/)) { // Go to tab in position \d
                     try {
                         chrome.runtime.sendMessage({ type:'changetab', num: this.cmd.slice(0,-2) })
