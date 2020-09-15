@@ -123,7 +123,7 @@ const getpatterns = () => {
             "prev":"prev, <, ‹, ←, «, <<, 上一页, 前页",
             "next":"next, >, ›, →, », >>, 下一页, 后页",
             "search":"search, kw, keyword, 搜索",
-            "save":"save, 保存"
+            "save":"save, update, 保存"
         }));
     }
     return JSON.parse(localStorage.getItem('patterns'))

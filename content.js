@@ -10,7 +10,6 @@ const currentPage = location.origin + location.pathname
 const flashvim = {
     disable: self == top && localStorage.getItem('DisableFlashVimPages') ? JSON.parse(localStorage.getItem('DisableFlashVimPages')).indexOf(currentPage) != -1 : false,
     // Failed to read the 'localStorage' property from 'Window': The document is sandboxed and lacks the 'allow-same-origin' flag.
-    insertMode: false, // 插入模式
     isCreateLabels: false, // 是否创建了链接/表单Label
     showLabels: true, // 是否显示链接/表单Label
     capsLock: false, // 大小写锁
@@ -409,8 +408,7 @@ flashvim.keyupHandler = function(event) {
 flashvim.keydownHandler = function(event) {
     if (this.disable) return
     this.clearTimeout()
-    var targetNode = event.target.nodeName
-    if (targetNode === 'INPUT' || targetNode === 'TEXTAREA') {
+    if (event.target.nodeName === 'INPUT' || event.target.nodeName === 'TEXTAREA' || event.target.isContentEditable) {
         this.updateInfoPanel('-- INSERT --', 'warn').timeout(2).then(_=> { this.hideInfoPanel() })
         return
     }
