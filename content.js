@@ -7,6 +7,9 @@ if (navigator.userAgent.includes("Firefox")) { // 兼容Firefox
 const $id = _id => document.getElementById(_id)
 const qSA = _s => document.querySelectorAll(_s)
 const currentPage = location.origin + location.pathname
+const currentDomain = location.hostname
+const currentRootDomain = currentDomain.replace(currentDomain.replace(/[^\.]+\.[^\.]+$/, ''), '')
+var lastkeycode = 0
 const flashvim = {
     disable: self == top && localStorage.getItem('DisableFlashVimPages') ? JSON.parse(localStorage.getItem('DisableFlashVimPages')).indexOf(currentPage) != -1 : false,
     // Failed to read the 'localStorage' property from 'Window': The document is sandboxed and lacks the 'allow-same-origin' flag.
@@ -19,7 +22,7 @@ const flashvim = {
     savePatterns: '',
     tid: 0, // timeout ID
     timeout: s => new Promise((resolve, reject) => { this.tid = setTimeout(resolve, 1000 * s, 'done') }),
-    clearTimeout: _ => { clearTimeout(this.tid) }
+    clearTimeout: _ => { clearTimeout(this.tid) },
 }
 
 chrome.runtime.sendMessage({type:'getpatterns'}, response => { // 初始化上/下一页 搜索匹配
@@ -93,6 +96,7 @@ flashvim.updateInfoPanel = function(info ,type) {
 }
 
 flashvim.commandHandler = function(_type) {
+    let that = this
     if (!this.cmd) {
         this.hideInfoPanel()
         return
@@ -137,24 +141,59 @@ flashvim.commandHandler = function(_type) {
             case ':tabnew': 
                 window.open(''); break
             case ':tc': // Google Translate:to Chinese
-                if(location.host.startsWith('translate.google.com')) {
-                    location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=zh-CN&text='+$id('source').value
-                } else if(location.href.startsWith('http')) {
+                if (location.host.startsWith('translate.google')) {
+                    location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=zh-CN&text='+document.querySelectorAll('textarea')[0].value
+                } else if (location.href.startsWith('http')) {
                     open('https://translate.google.com/translate?sl=auto&tl=zh-CN&u='+location.href)
                 }
                 break
             case ':te':// Google Translate:to English
-                if(location.host.startsWith('translate.google.com')) {
-                    location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=en&text='+$id('source').value
-                } else if(location.href.startsWith('http')) {
+                if (location.host.startsWith('translate.google')) {
+                    location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=en&text='+document.querySelectorAll('textarea')[0].value
+                } else if (location.href.startsWith('http')) {
                     open('https://translate.google.com/translate?sl=auto&tl=en&u='+location.href)
                 }
                 break
             case ':tf':// Google Translate:to French 
-                if(location.host.startsWith('translate.google.com')) {
-                    location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=fr&text='+$id('source').value
-                } else if(location.href.startsWith('http')) {
+                if (location.host.startsWith('translate.google')) {
+                    location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=fr&text='+document.querySelectorAll('textarea')[0].value
+                } else if (location.href.startsWith('http')) {
                     open('https://translate.google.com/translate?sl=auto&tl=fr&u='+location.href)
+                }
+                break
+            case ':tj':// Google Translate:to 日本語
+                if (location.host.startsWith('translate.google')) {
+                    location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=ja&text='+document.querySelectorAll('textarea')[0].value
+                } else if (location.href.startsWith('http')) {
+                    open('https://translate.google.com/translate?sl=auto&tl=ja&u='+location.href)
+                }
+                break
+            case ':tk':// Google Translate:to 한국어
+                if (location.host.startsWith('translate.google')) {
+                    location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=ko&text='+document.querySelectorAll('textarea')[0].value
+                } else if (location.href.startsWith('http')) {
+                    open('https://translate.google.com/translate?sl=auto&tl=ko&u='+location.href)
+                }
+                break
+            case ':tp':// google Translate:to Português
+                if (location.host.startsWith('translate.google')) {
+                    location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=pt&text='+document.querySelectorAll('textarea')[0].value
+                } else if (location.href.startsWith('http')) {
+                    open('https://translate.google.com/translate?sl=auto&tl=pt&u='+location.href)
+                }
+                break
+            case ':tr':// google translate:to Русский
+                if (location.host.startsWith('translate.google')) {
+                    location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=ru&text='+document.querySelectorAll('textarea')[0].value
+                } else if (location.href.startsWith('http')) {
+                    open('https://translate.google.com/translate?sl=auto&tl=ru&u='+location.href)
+                }
+                break
+            case ':ts':// Google Translate:to español
+                if (location.host.startsWith('translate.google')) {
+                    location.href='https://translate.google.com/#view=home&op=translate&sl=auto&tl=es&text='+document.querySelectorAll('textarea')[0].value
+                } else if (location.href.startsWith('http')) {
+                    open('https://translate.google.com/translate?sl=auto&tl=es&u='+location.href)
                 }
                 break
             case ':fetchimg': // Display all the big original images on the bottom
@@ -168,10 +207,30 @@ flashvim.commandHandler = function(_type) {
             case ':set img':
                 this.cancelHideAllImage()
                 break
+            case ':se fs': // 是否显示全屏
+            case ':set fs':
+              if (document.documentElement.mozRequestFullscreen) {
+                document.documentElement.mozRequestFullscreen()
+              } else if (document.documentElement.webkitRequestFullScreen) {
+                document.documentElement.webkitRequestFullScreen()
+              }
+              break
+            case ':se fs!':
+            case ':set fs!':
+              if (document.documentElement.mozCancelFullscreen) {
+                document.documentElement.mozCancelFullscreen()
+              } else if (document.webkitCancelFullScreen) {
+                document.webkitCancelFullScreen()
+              }
+              break
             case ':!date':
-                let that = this
                 setTimeout(function() {
                     that.updateInfoPanel(new Date().toString().slice(0,24), 'success')
+                }, 100)
+                break
+            case ':!locale':
+                setTimeout(function() {
+                    that.updateInfoPanel(navigator.languages.toString(), 'success')
                 }, 100)
                 break
             case ':help':
@@ -281,7 +340,7 @@ flashvim.commandHandler = function(_type) {
                             type: 'getlink',
                             cmd: this.cmd.slice(1,-1)
                         }, response => {
-                            response != null ? open(response) : 0
+                            response != null ? open(response.replace('{$domain}', currentDomain).replace('{$rootDomain}', currentRootDomain).replace('{$url}', currentPage)) : 0
                             this.cmd = ''
                         })
                     } catch(e) {}
@@ -300,17 +359,17 @@ flashvim.commandHandler = function(_type) {
                 } else if (this.cmd.match(/^\d+c$/)) { // [c]lick the link  which label ID is \d
                     $id('flashvim_label' + this.cmd.slice(0,-1)).nextElementSibling.click()
                     this.cmd=''
-                } else if(this.cmd.match(/^\d+f$/)){// [f]ocus on the element which label ID is \d
+                } else if (this.cmd.match(/^\d+f$/)){// [f]ocus on the element which label ID is \d
                     let target = $id('flashvim_label' + this.cmd.slice(0,-1)).nextElementSibling
                     setTimeout(function() {
                         target.focus()
                     }, 100)
                     $id('flashvim_label' + this.cmd.slice(0,-1)).style.opacity = 0 // Hide aim label
                     this.cmd=''
-                } else if(this.cmd.match(/^\+[a-z0-9-\.]+\.(com|io|us|cn|jp|de|fr|ru|local)$/)){
+                } else if (this.cmd.match(/^\+[a-z0-9-\.]+\.(com|io|us|cn|jp|de|fr|ru|local)$/)){
                     open('http://'+cmd.slice(1))
                     this.cmd=''
-                } else if(this.cmd.match(/^=[a-z0-9-\.]+\.(com|io|us|cn|jp|de|fr|ru|local)$/)){
+                } else if (this.cmd.match(/^=[a-z0-9-\.]+\.(com|io|us|cn|jp|de|fr|ru|local)$/)){
                     window.location.href='http://'+cmd.slice(1)
                     this.cmd=''
                 }
@@ -320,7 +379,7 @@ flashvim.commandHandler = function(_type) {
 }
 /* Get SEO info */
 flashvim.showSeoInfo = function() {
-    if (!$id('flashvim_seo_box')) {
+    if (!$id('flashvim_seo_box')) { // iframe 不好控制高度
         let newElem = document.createElement('div')
         newElem.id = 'flashvim_seo_box'
         document.body.appendChild(newElem)
@@ -328,21 +387,34 @@ flashvim.showSeoInfo = function() {
     } else {
         return
     }
+    document.querySelector('#flashvim_info').innerText=''
+    var title = document.title.replace(/(^[^-]+\s-\s)/,'')
+    var desc = document.head.querySelector("meta[name='description']") ? document.head.querySelector("meta[name='description']").content : ''
     var html ='<h1>SEO Information</h1>' +
-              '<h3>Title & URL & meta description(25 ~ 165 characters)</h3><div class="serp-preview">' + 
-              '<div class="serp-title">' + document.title.replace(/(^.+\s-\s)/,'') + '</div>' +
+              '<h3>I. Title(' + title.length + '/60) & URL & meta description(' + desc.length + '/160)</h3><div class="serp-preview">' + 
+              '<div class="serp-title">' + title + '</div>' +
               '<div class="serp-url">' + location.origin + location.pathname + '<span class="serp-arrow"></span></div>' +
-              '<div class="serp-description">' + (document.head.querySelector("meta[name='description']") ? document.head.querySelector("meta[name='description']").content : '') + '</div></div>' +
-              '<h3>Keywords</h3>' + (document.head.querySelector("meta[name='keywords']") ? document.head.querySelector("meta[name='keywords']").content : '') + '</p>';
-    html += '<h3>h1</h3>';
+              '<div class="serp-description">' + desc + '</div></div>' +
+              '<p class="tip">1. According to <a href="https://moz.com/learn/seo/title-tag" target="_blank">Moz</a> , title tags that starts with a keyword tend to perform better than title tags with the keyword towards the end of the tag.</p>' +
+              '<p class="tip">[Primary Keyword] - [Secondary Keyword] | [Brand Name]</p>' +
+              '<p class="tip">[Product Name] - [Product Category] | [Brand Name]</p>' +
+              '<p class="tip">2. Don\'t overdo SEO keywords, such as: Buy Widgets, Best Widgets, Cheap Widgets, Widgets for Sale</p>' +
+              '<p class="tip">3. Give every page a unique title</p>'+
+              '<p class="tip">4. Google doesn\'t use the meta description tag as a direct ranking signal. However, your description tag can impact click-through-rate, which is a key ranking factor.</p>'+
+              '<h3>II. Keywords</h3>' + (document.head.querySelector("meta[name='keywords']") ? document.head.querySelector("meta[name='keywords']").content : '') + '</p>';
+    html += '<h3>III. h1</h3>';
     qSA('h1').forEach(function(_elem){ html += '<p>'+_elem.innerText + '</p>'} );
-    html += '<h3>h2</h3>';
+    html += '<h3>IV. h2</h3>';
+    var first100 = document.body.innerText.replace(/\n/g,' ').replace(/\s+/g,' ').split(' ').slice(0,100).join(' ')
+    html += '<h3>V. First 100 words</h3><p class="tip">Having a keyword appear in the first 100 words of a page’s content is correlated to first page Google rankings</p><p>' + first100 + '</p>';
     qSA('h2').forEach(function(_elem){ html += '<p>'+_elem.innerText + '</p>'} );
-    html += '<h3>img alt</h3><table>';
-    qSA('img').forEach(function(_elem){ html += '<tr><td>'+_elem.alt + '</td><td><img style="max-width:100px" src="' + _elem.src + '"></td><td>'+_elem.src+'</td></tr>'} );
-    html += '</table><h3>Anchor Text</h3><table>';
-    qSA('a').forEach(function(_elem){ if(_elem.href.startsWith('http')) { html += '<tr><td>' + _elem.href + '</td><td>' + _elem.title + '</td><td>' + _elem.innerText + '</td><td>' + _elem.parentElement.innerText + '</td></tr>'}} );
+    html += '<h3>V. img alt</h3><table><tr><th>图片</th><th>alt</th><th>src</th></tr>';
+    qSA('img').forEach(function(_elem){ html += '<tr><td><img style="max-width:100px" src="' + _elem.src + '"></td><td>'+_elem.alt + '</td><td>'+_elem.src+'</td></tr>'} );
+    html += '<p class="tip">Alt text provide better image context/descriptions to search engine crawlers, helping them to index an image properly.</p>'
+    html += '</table><h3>VI. Anchor Text</h3><table><tr><th>href</th><th>title</th><th>Anchor Text</th><th>Parent Node innerText</th></tr>';
+    qSA('a').forEach(function(_elem){ if (_elem.href.startsWith('http')) { html += '<tr><td>' + _elem.href + '</td><td>' + _elem.title + '</td><td>' + _elem.innerText + '</td><td>' + _elem.parentElement.innerText + '</td></tr>'}} );
     html += '</table>';
+    html += '<p class="tip">Use descriptive keywords in anchor text that reflect the same topic or keywords the target page is trying to target. It\'s not necessary to use the same keyword text every time—in fact, doing so can trigger spam detectors. Instead, strive for a variety of anchor text that enhances context and usability for your users—and for search engines, as well.</p>';
     $id('flashvim_seo_box').innerHTML = html;
 }
 /* Get all the big images */
@@ -363,7 +435,7 @@ flashvim.fetchImgList = function() {
             html += '<img src="' + srcPath + '"/>'
         }
     })
-    if(!$id('flashvim_img_box')){
+    if (!$id('flashvim_img_box')){
         var newElem = document.createElement("div")
         newElem.id="flashvim_img_box"
         document.body.appendChild(newElem)
@@ -399,11 +471,17 @@ flashvim.keyupHandler = function(event) {
         this.disable = !this.disable
     }
     if (this.disable) return
+    if (lastkeycode == 17 && event.keyCode == 67) { // Ctrl + C
+        this.hideInfoPanel()
+        event.target.blur()
+        document.body.blur()
+    }
     if (event.keyCode == 27){ // ESC
         this.hideInfoPanel()
         event.target.blur()
         document.body.blur()
     }
+    lastkeycode = event.keyCode
 }
 flashvim.keydownHandler = function(event) {
     if (this.disable) return
@@ -416,7 +494,7 @@ flashvim.keydownHandler = function(event) {
     if (event.keyCode === 37) { // Arrow Left
         var p = this.prevPatterns.split(',')
         qSA('a').forEach(elem => {
-            if(elem.text && elem.href) {
+            if (elem.text && elem.href) {
                 for(var i in p) { 
                     if (elem.text.toLocaleLowerCase().includes(p[i].trim())) {
                         location.replace(elem.href)
@@ -431,7 +509,7 @@ flashvim.keydownHandler = function(event) {
     if (event.keyCode === 39) { // Arrow right 
         var p = this.nextPatterns.split(',')
         qSA('a').forEach(elem => {
-            if(elem.text && elem.href) {
+            if (elem.text && elem.href) {
                 for(var i in p) { 
                     if (elem.text.toLocaleLowerCase().includes(p[i].trim())) {
                         location.replace(elem.href)
@@ -445,6 +523,7 @@ flashvim.keydownHandler = function(event) {
     var Shift = event.shiftKey
     switch (event.keyCode) {
         case 16: return // Shift
+        case 17: return // Ctrl
         case 20: this.CapsLock = !this.CapsLock; return // Caps Lock
         case 32: this.cmd+=' '; if (this.cmd.length > 1) { event.preventDefault() } else { this.cmd = '' }; break // spacebar
         case 96: this.cmd+='0';break //numpad 0

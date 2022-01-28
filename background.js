@@ -112,7 +112,8 @@ const getlinkmap = () => {
             "gh":"https://github.com",
             "gg":"https://www.google.com/",
             "tt":"https://twitter.com/",
-            "fv":"https://h.markbuild.com/flashvim.html"
+            "fv":"https://h.markbuild.com/flashvim.html",
+            "w3v": "https://validator.w3.org/nu/?doc={$url}"
         }))
     }
     return JSON.parse(localStorage.getItem('linkmap'))

@@ -19,7 +19,7 @@ document.getElementById("uploadbackupfile").addEventListener('change', (event) =
 document.getElementById("savesyninfo").addEventListener('click', (event) => {savesyninfo()}, false )
 
 const render_link_map_table = () => {
-    var html='<tr><th>Key</th><th>Link</th></tr>'
+    var html='<tr><th>Key</th><th>Link <i>(Variable: {$domain}, {$rootDomain}, {$url})</i></th></tr>'
     Object.keys(linkmap).sort().forEach(function(key) {
         html+='<tr><td class="key"><input value="'+key+'" /></td><td class="link"><input value="'+linkmap[key]+'" /></td><td><button class="remove">x</button></td></tr>'
     })
