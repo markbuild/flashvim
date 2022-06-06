@@ -376,6 +376,7 @@ flashvim.commandHandler = function(_type) {
                 this.updateInfoPanel(this.cmd)
         }
     }
+    that.timeout(4).then(_ =>{ that.cmd='';that.updateInfoPanel('')});
 }
 /* Get SEO info */
 flashvim.showSeoInfo = function() {
