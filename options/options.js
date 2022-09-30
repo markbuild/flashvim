@@ -19,9 +19,14 @@ document.getElementById("uploadbackupfile").addEventListener('change', (event) =
 document.getElementById("savesyninfo").addEventListener('click', (event) => {savesyninfo()}, false )
 
 const render_link_map_table = () => {
-    var html='<tr><th>Key</th><th>Link <i>(Variable: {$domain}, {$rootDomain}, {$url})</i></th></tr>'
+    var html='<tr><th>Key</th><th>Link <i>(Variable: {$domain}, {$rootDomain}, {$url})</i></th><th>Description</th></tr>'
+    var isString = typeof linkmap[Object.keys(linkmap)[0]] === 'string' // 兼容之前的字符串
     Object.keys(linkmap).sort().forEach(function(key) {
-        html+='<tr><td class="key"><input value="'+key+'" /></td><td class="link"><input value="'+linkmap[key]+'" /></td><td><button class="remove">x</button></td></tr>'
+        if (isString) {
+            html+='<tr><td class="key"><input value="'+key+'" /></td><td class="link"><input value="'+linkmap[key]+'" /></td><td class="desc"><input value="" /></td><td><button class="remove">x</button></td></tr>'
+        } else {
+            html+='<tr><td class="key"><input value="'+key+'" /></td><td class="link"><input value="'+linkmap[key][0]+'" /></td><td class="desc"><input value="'+linkmap[key][1]+'" /></td><td><button class="remove">x</button></td></tr>'
+        }
     })
 
     document.getElementById("linkmapedit").innerHTML=html
@@ -67,7 +72,7 @@ const loadfile = (event_this) => {
 const add_new_map = () => {
     let tr = document.createElement('tr')
     tr.className="new"
-    tr.innerHTML+='<td class="key"><input></td><td class="link"><input></td><td><button class="remove">x</button></td>'
+    tr.innerHTML+='<td class="key"><input></td><td class="link"><input></td><td class="desc"><input></td><td><button class="remove">x</button></td>'
     document.getElementById("linkmapedit").appendChild(tr)
     for(let i = 0; i < document.getElementsByClassName("remove").length; i++){
         document.getElementsByClassName("remove")[i].addEventListener('click', (event) => { removecurrentline(event) }, false )
@@ -84,20 +89,20 @@ const save_linkmap = () => {
     var elems = document.getElementById("linkmapedit").getElementsByTagName("input")
     var arr={}
     for(var i=0;i< elems.length;i++){
-        var value= elems[i].value
-        if(!value) {
+        var value = elems[i].value
+        if(!value && i % 3 !== 2) {
             alert('You data is not valid')
             return
         }
-        if(i%2==1) {
-            arr[elems[i-1].value]=elems[i].value
+        if(i % 3 == 2) {
+            arr[elems[i - 2].value] = [elems[i - 1].value, elems[i].value]
         }
     }
     linkmap = {}
     Object.keys(arr).sort().forEach(function(key) {
         linkmap[key] = arr[key]
     })
-    chrome.runtime.sendMessage({type:'setlinkmap',linkmap:linkmap},function (response) {
+    chrome.runtime.sendMessage({type:'setlinkmap', linkmap:linkmap},function (response) {
         render_link_map_table()
     })
 }

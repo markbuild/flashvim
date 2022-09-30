@@ -55,7 +55,8 @@ chrome.runtime.onMessage.addListener((request,sender,sendResponse) => {
             });
             break;
         case 'getlink':
-            sendResponse(getlinkmap()[request.cmd])
+            var v = getlinkmap()
+            typeof v === 'object' ?  sendResponse(getlinkmap()[request.cmd][0]) : sendResponse(getlinkmap()[request.cmd]) // 兼容之前的字符串
             break;
         case 'getlinkmap':
             sendResponse(getlinkmap())
@@ -109,11 +110,11 @@ chrome.runtime.onMessage.addListener((request,sender,sendResponse) => {
 const getlinkmap = () => {
     if(!localStorage.getItem('linkmap')) { // Init Setting
         localStorage.setItem('linkmap', JSON.stringify({
-            "gh":"https://github.com",
-            "gg":"https://www.google.com/",
-            "tt":"https://twitter.com/",
-            "fv":"https://h.markbuild.com/flashvim.html",
-            "w3v": "https://validator.w3.org/nu/?doc={$url}"
+            "gh":["https://github.com", ""],
+            "gg":["https://www.google.com/", ""],
+            "tt":["https://twitter.com/", ""],
+            "fv":["https://h.markbuild.com/flashvim.html", ""],
+            "w3v": ["https://validator.w3.org/nu/?doc={$url}", ""]
         }))
     }
     return JSON.parse(localStorage.getItem('linkmap'))

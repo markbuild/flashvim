@@ -391,6 +391,7 @@ flashvim.showSeoInfo = function() {
     document.querySelector('#flashvim_info').innerText=''
     var title = document.title.replace(/(^[^-]+\s-\s)/,'')
     var desc = document.head.querySelector("meta[name='description']") ? document.head.querySelector("meta[name='description']").content : ''
+    var canonical_url = document.head.querySelector('[rel="canonical"]') ? document.head.querySelector('[rel="canonical"]').href : '-'
     var html ='<h1>SEO Information</h1>' +
               '<h3>I. Title(' + title.length + '/60) & URL & meta description(' + desc.length + '/160)</h3><div class="serp-preview">' + 
               '<div class="serp-title">' + title + '</div>' +
@@ -402,13 +403,13 @@ flashvim.showSeoInfo = function() {
               '<p class="tip">2. Don\'t overdo SEO keywords, such as: Buy Widgets, Best Widgets, Cheap Widgets, Widgets for Sale</p>' +
               '<p class="tip">3. Give every page a unique title</p>'+
               '<p class="tip">4. Google doesn\'t use the meta description tag as a direct ranking signal. However, your description tag can impact click-through-rate, which is a key ranking factor.</p>'+
-              '<h3>II. Keywords</h3>' + (document.head.querySelector("meta[name='keywords']") ? document.head.querySelector("meta[name='keywords']").content : '') + '</p>';
+              '<h3>II. Canonical Url</h3>' + canonical_url + '</p>';
     html += '<h3>III. h1</h3>';
     qSA('h1').forEach(function(_elem){ html += '<p>'+_elem.innerText + '</p>'} );
     html += '<h3>IV. h2</h3>';
+    qSA('h2').forEach(function(_elem){ html += '<p>'+_elem.innerText + '</p>'} );
     var first100 = document.body.innerText.replace(/\n/g,' ').replace(/\s+/g,' ').split(' ').slice(0,100).join(' ')
     html += '<h3>V. First 100 words</h3><p class="tip">Having a keyword appear in the first 100 words of a page’s content is correlated to first page Google rankings</p><p>' + first100 + '</p>';
-    qSA('h2').forEach(function(_elem){ html += '<p>'+_elem.innerText + '</p>'} );
     html += '<h3>V. img alt</h3><table><tr><th>图片</th><th>alt</th><th>src</th></tr>';
     qSA('img').forEach(function(_elem){ html += '<tr><td><img style="max-width:100px" src="' + _elem.src + '"></td><td>'+_elem.alt + '</td><td>'+_elem.src+'</td></tr>'} );
     html += '<p class="tip">Alt text provide better image context/descriptions to search engine crawlers, helping them to index an image properly.</p>'
