@@ -197,7 +197,10 @@ flashvim.commandHandler = function(_type) {
                 }
                 break
             case ':fetchimg': // Display all the big original images on the bottom
-                this.fetchImgList() 
+                this.fetchImgList()
+                break
+            case ':rmads': // 清楚广告中的iframe等遮挡物
+                document.querySelectorAll('iframe').forEach(item => item.remove())
                 break
             case ':se img!': // Hide all the images
             case ':set img!':
@@ -523,6 +526,7 @@ flashvim.keydownHandler = function(event) {
         })
     }
     var Shift = event.shiftKey
+    var Ctrl = event.ctrlKey
     switch (event.keyCode) {
         case 16: return // Shift
         case 17: return // Ctrl
@@ -571,8 +575,10 @@ flashvim.keydownHandler = function(event) {
         case 220:Shift? this.cmd+='|':this.cmd+='\\';break
         case 221:Shift? this.cmd+='}':this.cmd+=']';break;
         case 222:Shift? this.cmd+='"':this.cmd+='\'';break;
-        default:{
-            if (event.keyCode >=65 && event.keyCode <=90) { // A ~ Z
+        default: {
+            if (Ctrl && event.keyCode === 85) { // Ctrl-U, Clear input
+                this.cmd = ''
+            } else if (event.keyCode >=65 && event.keyCode <=90) { // A ~ Z
                 (this.capsLock != Shift) ? this.cmd += String.fromCharCode(event.keyCode) : this.cmd += String.fromCharCode(event.keyCode).toLowerCase() 
             } 
         }
