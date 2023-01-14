@@ -14,7 +14,7 @@ const flashvim = {
     disable: self == top && localStorage.getItem('DisableFlashVimPages') ? JSON.parse(localStorage.getItem('DisableFlashVimPages')).indexOf(currentPage) != -1 : false,
     // Failed to read the 'localStorage' property from 'Window': The document is sandboxed and lacks the 'allow-same-origin' flag.
     isCreateLabels: false, // 是否创建了链接/表单Label
-    showLabels: true, // 是否显示链接/表单Label
+    isShowLabels: false, // 是否显示链接/表单Label
     capsLock: false, // 大小写锁
     prevPatterns: '',
     nextPatterns: '',
@@ -33,12 +33,26 @@ chrome.runtime.sendMessage({type:'getpatterns'}, response => { // 初始化上/�
 })
 
 /***+++++++++++++++++++ Methods ++++++++++++++++++++++++++++***/
+function convert26(num){
+   var str=""
+   while (num > 0){
+     var m = num % 26;
+     if (m == 0){
+       m = 26
+     }
+     str = String.fromCharCode(m + 96) + str
+     num = (num - m) / 26
+   }
+   return str
+}
 flashvim.createLabels = function() { // 创建链接/表单Label
     this.isCreateLabels = true
+    this.isShowLabels = true
     qSA('a, input, textarea, select, button').forEach((elem, index) => {
         if (elem.type == 'hidden') return true
         if (elem.tagName === 'A' && !elem.innerHTML) return true
         let newElem = document.createElement('span')
+        index = convert26(index + 1)
         newElem.id = 'flashvim_label' + index
         newElem.className = 'flashvim_label'
         newElem.innerHTML = index
@@ -49,11 +63,16 @@ flashvim.createLabels = function() { // 创建链接/表单Label
         }
     })
 }
-flashvim.hideLabels = function() {
-    this.showLabels = !this.showLabels
-    var opacity = this.showLabels ? 1 : 0
+flashvim.showLabels = function() {
+    this.isShowLabels = true
     qSA('.flashvim_label').forEach(elem => {
-        elem.style.opacity = opacity
+        elem.style.opacity = 1
+    })
+}
+flashvim.hideLabels = function() {
+    this.isShowLabels = false
+    qSA('.flashvim_label').forEach(elem => {
+        elem.style.opacity = 0
     })
 }
 /* Create Information Panel */
@@ -199,7 +218,7 @@ flashvim.commandHandler = function(_type) {
             case ':fetchimg': // Display all the big original images on the bottom
                 this.fetchImgList()
                 break
-            case ':rmads': // 清楚广告中的iframe等遮挡物
+            case ':rmifr': // 清楚广告中的iframe等遮挡物
                 document.querySelectorAll('iframe').forEach(item => item.remove())
                 break
             case ':se img!': // Hide all the images
@@ -247,6 +266,20 @@ flashvim.commandHandler = function(_type) {
                     try {
                         chrome.runtime.sendMessage({type:'tabm', tabIndex:cmd.slice(5)})
                     } catch(e) {}
+                } else if (this.cmd.match(/^\.\w+$/)) { //If match the key of linkmap
+                    try {
+                        chrome.runtime.sendMessage({
+                            type: 'getlink',
+                            cmd: this.cmd.slice(1)
+                        }, response => {
+                            response != null ? open(response.replace('{$domain}', currentDomain).replace('{$rootDomain}', currentRootDomain).replace('{$url}', currentPage)) : 0
+                            this.cmd = ''
+                        })
+                    } catch(e) {}
+                } else if (this.cmd.match(/^'[A-z0-9\.\/\-]+$/)) {
+                    open('http://'+cmd.slice(1))
+                } else if (this.cmd.match(/^;[A-z0-9\.\/\-]+$/)) {
+                    window.location.href='http://'+cmd.slice(1)
                 }
         }
         this.cmd = ''
@@ -310,7 +343,7 @@ flashvim.commandHandler = function(_type) {
                 if (!this.isCreateLabels) {
                     this.createLabels()
                 } else {
-                    this.hideLabels()
+                    this.showLabels()
                 }
                 this.cmd = ''
                 return
@@ -337,44 +370,39 @@ flashvim.commandHandler = function(_type) {
                 this.cmd = ''
                 return
             default:
-                if (this.cmd.match(/^\.\w+\.$/)) { //If match the key of linkmap
-                    try {
-                        chrome.runtime.sendMessage({
-                            type: 'getlink',
-                            cmd: this.cmd.slice(1,-1)
-                        }, response => {
-                            response != null ? open(response.replace('{$domain}', currentDomain).replace('{$rootDomain}', currentRootDomain).replace('{$url}', currentPage)) : 0
-                            this.cmd = ''
-                        })
-                    } catch(e) {}
+ 
+                if (this.cmd.match(/^\.[a-z]+\'$/)) { // [o]pen the link which label ID is \d in a new tab
+                    var elem = $id('flashvim_label' + this.cmd.slice(1,-1))
+                    this.cmd=''
+                    if (!elem) {
+                      return
+                    }
+                    open(elem.parentElement.href)
+                    elem.style.opacity = 0 // Hide aim label
+                } else if (this.cmd.match(/^\.[a-z]+;$/)) { // [c]lick the link or button which label ID is \d
+                    var elem = $id('flashvim_label' + this.cmd.slice(1,-1))
+                    this.cmd=''
+                    if (!elem) {
+                      return
+                    }
+                    if (elem.parentElement.href) {
+                      elem.parentElement.click()
+                    } else if (elem.nextElementSibling) {
+                      target = elem.nextElementSibling
+                        if (target.type === 'submit' || target.tagName === 'BUTTON') {
+                          target.click()
+                        } else {
+                          setTimeout(function() {
+                              target.focus()
+                              }, 100)
+                        }
+                      elem.style.opacity = 0 // Hide aim label
+                    }
                 } else if (this.cmd.match(/^\d+gt$/)) { // Go to tab in position \d
                     try {
                         chrome.runtime.sendMessage({ type:'changetab', num: this.cmd.slice(0,-2) })
                     } catch(e) {}
                     this.cmd = ''
-                } else if (this.cmd.match(/^\d+r$/)) { // [r]edirect to the link which label ID  is \d
-                    window.location.href = $id('flashvim_label' + this.cmd.slice(0,-1)).parentElement.href
-                    this.cmd = ''
-                } else if (this.cmd.match(/^\d+n$/)) { // [o]pen the link which label ID is \d in a new tab
-                    open($id('flashvim_label' + this.cmd.slice(0,-1)).parentElement.href)
-                    $id('flashvim_label' + this.cmd.slice(0, -1)).style.opacity = 0 // Hide aim label
-                    this.cmd=''
-                } else if (this.cmd.match(/^\d+c$/)) { // [c]lick the link  which label ID is \d
-                    $id('flashvim_label' + this.cmd.slice(0,-1)).nextElementSibling.click()
-                    this.cmd=''
-                } else if (this.cmd.match(/^\d+f$/)){// [f]ocus on the element which label ID is \d
-                    let target = $id('flashvim_label' + this.cmd.slice(0,-1)).nextElementSibling
-                    setTimeout(function() {
-                        target.focus()
-                    }, 100)
-                    $id('flashvim_label' + this.cmd.slice(0,-1)).style.opacity = 0 // Hide aim label
-                    this.cmd=''
-                } else if (this.cmd.match(/^\+[a-z0-9-\.]+\.(com|io|us|cn|jp|de|fr|ru|local)$/)){
-                    open('http://'+cmd.slice(1))
-                    this.cmd=''
-                } else if (this.cmd.match(/^=[a-z0-9-\.]+\.(com|io|us|cn|jp|de|fr|ru|local)$/)){
-                    window.location.href='http://'+cmd.slice(1)
-                    this.cmd=''
                 }
                 this.updateInfoPanel(this.cmd)
         }
@@ -476,13 +504,10 @@ flashvim.keyupHandler = function(event) {
         this.disable = !this.disable
     }
     if (this.disable) return
-    if (lastkeycode == 17 && event.keyCode == 67) { // Ctrl + C
+    if ((lastkeycode == 17 && event.keyCode == 67) || (event.keyCode == 27)) { // Ctrl + C or ESC
+        this.cmd = ''
         this.hideInfoPanel()
-        event.target.blur()
-        document.body.blur()
-    }
-    if (event.keyCode == 27){ // ESC
-        this.hideInfoPanel()
+        this.hideLabels()
         event.target.blur()
         document.body.blur()
     }

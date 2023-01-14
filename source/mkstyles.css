@@ -21,8 +21,9 @@ span.flashvim_label{/*!important: top priority*/
     text-shadow: none !important;
     font-weight: bold !important;
     text-align: center !important;
+    text-transform: none !important;
 }
-a span.flashvim_label {
+a > span.flashvim_label {
     background:red !important;
     text-shadow: 1px 1px 0px #333 !important;
     color: #fff !important;
