@@ -1,10 +1,16 @@
 var linkmap = {}
 var patterns = {}
+var scriptset = []
 
 chrome.runtime.sendMessage({type:'getlinkmap'},function (response) {
     linkmap = response
     render_link_map_table()
 })
+chrome.runtime.sendMessage({type:'getscriptset'},function (response) {
+    scriptset = response
+    render_scriptset_table()
+})
+
 chrome.runtime.sendMessage({type:'getpatterns'},function (response) {
     patterns = response
     render_patterns_table()
@@ -13,9 +19,15 @@ chrome.runtime.sendMessage({type:'getpatterns'},function (response) {
 document.getElementById("add_new_map").addEventListener('click', (event) => { add_new_map() }, false )
 document.getElementById("save_linkmap").addEventListener('click', (event) => { save_linkmap() }, false )
 document.getElementById("reset_linkmap").addEventListener('click', (event) => { reset_linkmap() }, false )
+
+document.getElementById("add_new_scriptset").addEventListener('click', (event) => { add_new_scriptset() }, false )
+document.getElementById("save_scriptset").addEventListener('click', (event) => { save_scriptset() }, false )
+document.getElementById("reset_scriptset").addEventListener('click', (event) => { reset_scriptset() }, false )
+
 document.getElementById("save_patterns").addEventListener('click', (event) => { save_patterns() }, false )
 document.getElementById("reset_patterns").addEventListener('click', (event) => { reset_patterns() }, false )
 document.getElementById("uploadbackupfile").addEventListener('change', (event) => {loadfile(event.target)}, false )
+
 document.getElementById("savesyninfo").addEventListener('click', (event) => {savesyninfo()}, false )
 
 const render_link_map_table = () => {
@@ -35,6 +47,18 @@ const render_link_map_table = () => {
     }
     update_backup_link()
 }
+const render_scriptset_table = () => {
+    var html='<tr><th>URL Regexp</th><th>JavaScript Script</th><th>Description</th></tr>'
+    console.log(scriptset)
+    scriptset.forEach(function(item) {
+            html+='<tr><td class="urlReg"><input value="'+item[0]+'" /></td><td class="script"><textarea>'+item[1]+'</textarea></td><td class="desc"><input value="'+item[2]+'" /></td><td><button class="removescript">x</button></td></tr>'
+    })
+    document.getElementById("scriptsetedit").innerHTML=html
+    for(let i = 0; i < document.getElementsByClassName("removescript").length; i++){
+        document.getElementsByClassName("removescript")[i].addEventListener('click', (event) => { removecurrentline(event) }, false )
+    }
+    update_backup_link()
+}
 const render_patterns_table = () => {
     document.getElementById("prev_patterns").value = patterns.prev || ''
     document.getElementById("next_patterns").value = patterns.next || ''
@@ -44,7 +68,7 @@ const render_patterns_table = () => {
 }
 
 const update_backup_link = () => {
-    const options={linkmap:linkmap, patterns:patterns}
+    const options={linkmap:linkmap, scriptset:scriptset, patterns:patterns}
     const str = JSON.stringify(options)
     const blob = new Blob([str], {type: "text/json,charset=UTF-8"})
     const elem = document.getElementById("downloadbackup")
@@ -61,6 +85,11 @@ const loadfile = (event_this) => {
             linkmap = response
             render_link_map_table()
         })
+        chrome.runtime.sendMessage({type:'setscriptset',scriptset:options.scriptset},function (response) {
+            scriptset = response
+            render_scriptset_table()
+        })
+
         chrome.runtime.sendMessage({type:'setpatterns',linkmap:options.patterns},function (response) {
             patterns = response
             render_patterns_table()
@@ -68,7 +97,6 @@ const loadfile = (event_this) => {
     }
     reader.readAsText(file)
 }
-
 const add_new_map = () => {
     let tr = document.createElement('tr')
     tr.className="new"
@@ -78,12 +106,24 @@ const add_new_map = () => {
         document.getElementsByClassName("remove")[i].addEventListener('click', (event) => { removecurrentline(event) }, false )
     }
 }
+const add_new_scriptset = () => {
+    let tr = document.createElement('tr')
+    tr.className="new"
+    tr.innerHTML+='<td class="urlReg"><input></td><td class="script"><textarea></textarea></td><td class="desc"><input></td><td><button class="removescript">x</button></td>'
+    document.getElementById("scriptsetedit").appendChild(tr)
+    for(let i = 0; i < document.getElementsByClassName("removescript").length; i++) {
+        document.getElementsByClassName("removescript")[i].addEventListener('click', (event) => { removecurrentline(event) }, false )
+    }
+}
 
 const removecurrentline = (event) => {
     event.target.parentElement.parentElement.remove()
 }
 const reset_linkmap = () => {
     render_link_map_table()
+}
+const reset_scriptset = () => {
+    render_scriptset_table()
 }
 const save_linkmap = () => {
     var elems = document.getElementById("linkmapedit").getElementsByTagName("input")
@@ -104,6 +144,23 @@ const save_linkmap = () => {
     })
     chrome.runtime.sendMessage({type:'setlinkmap', linkmap:linkmap},function (response) {
         render_link_map_table()
+    })
+}
+const save_scriptset = () => {
+    var elems = document.getElementById("scriptsetedit").querySelectorAll("input,textarea")
+    scriptset=[]
+    for(var i=0;i< elems.length;i++){
+        var value = elems[i].value
+        if(!value && i % 3 !== 2) {
+            alert('You data is not valid')
+            return
+        }
+        if(i % 3 == 2) {
+            scriptset.push([elems[i-2].value, elems[i-1].value, elems[i].value])
+        }
+    }
+    chrome.runtime.sendMessage({type:'setscriptset', scriptset:scriptset},function (response) {
+        render_scriptset_table()
     })
 }
 const reset_patterns = () => {

@@ -36,6 +36,8 @@ a > span.flashvim_label {
 #flashvim_options th i { font-weight: normal; }
 #flashvim_options .new input{border: 1px solid darkred;}
 #flashvim_options tr button{color:red;cursor:pointer}
+#flashvim_options .urlReg input { width: 15vw;}
+#flashvim_options .script textarea { width: 50vw;}
 #flashvim_options .box {
     font-size: 13px;
     border: 1px solid #000;

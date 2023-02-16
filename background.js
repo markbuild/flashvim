@@ -69,6 +69,17 @@ chrome.runtime.onMessage.addListener((request,sender,sendResponse) => {
                 sync_write();
             }
             break;
+        case 'getscriptset':
+            sendResponse(getscriptset())
+            break;
+        case 'setscriptset':
+            if (!request.scriptset) return false
+            localStorage.setItem('scriptset', JSON.stringify(request.scriptset));
+            sendResponse(JSON.parse(localStorage.getItem('scriptset')));
+            if(localStorage.getItem('synurl')){ // 异步任务
+                sync_write();
+            }
+            break;
         case 'getpatterns':
             sendResponse(getpatterns())
             break;
@@ -84,6 +95,7 @@ chrome.runtime.onMessage.addListener((request,sender,sendResponse) => {
             const doSomethingWith = async () => {
                 return await sync_read((_res) => {
                     localStorage.setItem('linkmap', JSON.stringify(_res.linkmap))
+                    localStorage.setItem('scriptset', JSON.stringify(_res.scriptset))
                     localStorage.setItem('patterns', JSON.stringify(_res.patterns))
                 })
             }
@@ -119,6 +131,13 @@ const getlinkmap = () => {
     }
     return JSON.parse(localStorage.getItem('linkmap'))
 }
+const getscriptset = () => {
+    if(!localStorage.getItem('scriptset')) { // Init Setting
+        localStorage.setItem('scriptset', JSON.stringify([]))
+    }
+    return JSON.parse(localStorage.getItem('scriptset'))
+}
+
 const getpatterns = () => {
     if(!localStorage.getItem('patterns')) { // Init Setting
         localStorage.setItem('patterns', JSON.stringify({
@@ -281,8 +300,9 @@ const sync_read = _callback => {
 }
 const sync_write = _=> {
     let linkmap = JSON.parse(localStorage.getItem('linkmap'))
+    let scriptset = JSON.parse(localStorage.getItem('scriptset'))
     let patterns = JSON.parse(localStorage.getItem('patterns'))
-    let str = JSON.stringify({linkmap: linkmap, patterns: patterns});
+    let str = JSON.stringify({linkmap: linkmap, scriptset: scriptset, patterns: patterns});
     let username = localStorage.getItem('synusername');
     let password = localStorage.getItem('synpassword');
     let url = localStorage.getItem('synurl');
@@ -303,6 +323,7 @@ setInterval(function () {
         if(time - last_syn_time > 300){ // Synchronisation interval: 5 minutes
             sync_read(function(_res) {
                 localStorage.setItem('linkmap', JSON.stringify(_res.linkmap))
+                localStorage.setItem('scriptset', JSON.stringify(_res.scriptset))
                 localStorage.setItem('patterns', JSON.stringify(_res.patterns))
                 localStorage.setItem('syntime', parseInt(new Date().getTime()/1000))
             })

@@ -614,7 +614,20 @@ flashvim.mouseOverHandler = function(event) {
         console.log(event.pageX, event.pageY)
     }
 }
-
+/* Run Custom Script */
+flashvim.runCustomScript = function() {
+  try {
+    chrome.runtime.sendMessage({
+    type: 'getscriptset'
+  }, response => {
+      response.forEach(function(item) {
+        if (new RegExp(item[0]).test(currentPage)) {
+          eval(item[1])
+        }
+      })
+    })
+  } catch(e) {}
+}
 /*++++++++++++++++++++ Watcher +++++++++++++++++++++++*/
 Object.defineProperties(flashvim, {
     cmd: {
@@ -632,6 +645,6 @@ flashvim.cmd = ''
 
 /***+++++++++++++++++++ Event Listener ++++++++++++++++++++++++++++***/
 // https://stackoverflow.com/questions/12045440/difference-between-document-addeventlistener-and-window-addeventlistener
-document.addEventListener("DOMContentLoaded", _ => { flashvim.createInfoPanel() })
+document.addEventListener("DOMContentLoaded", _ => { flashvim.createInfoPanel();flashvim.runCustomScript() })
 document.addEventListener('keydown', event => { flashvim.keydownHandler(event) }, false)
 document.addEventListener('keyup', event => { flashvim.keyupHandler(event) }, false)
