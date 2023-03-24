@@ -31,7 +31,7 @@ document.getElementById("uploadbackupfile").addEventListener('change', (event) =
 document.getElementById("savesyninfo").addEventListener('click', (event) => {savesyninfo()}, false )
 
 const render_link_map_table = () => {
-    var html='<tr><th>Key</th><th>Link <i>(Variable: {$domain}, {$rootDomain}, {$url})</i></th><th>Description</th></tr>'
+    var html='<tr><th>Keyword</th><th>Link <i>(Variable: {$domain}, {$rootDomain}, {$url})</i></th><th>Description</th></tr>'
     var isString = typeof linkmap[Object.keys(linkmap)[0]] === 'string' // 兼容之前的字符串
     Object.keys(linkmap).sort().forEach(function(key) {
         if (isString) {

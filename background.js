@@ -1,7 +1,9 @@
 if (navigator.userAgent.includes("Firefox")) { // 兼容Firefox
     chrome = browser;
 } 
-
+chrome.browserAction.onClicked.addListener(function(tab) {
+  chrome.tabs.create({ url: chrome.extension.getURL('options/index.html') });
+});
 chrome.runtime.onMessage.addListener((request,sender,sendResponse) => {
     switch(request.type) {
         case 'closeCurrentTab':

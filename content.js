@@ -10,6 +10,7 @@ const currentPage = location.origin + location.pathname
 const currentDomain = location.hostname
 const currentRootDomain = currentDomain.replace(currentDomain.replace(/[^\.]+\.[^\.]+$/, ''), '')
 var lastkeycode = 0
+var maxScrollElement
 const flashvim = {
     disable: self == top && localStorage.getItem('DisableFlashVimPages') ? JSON.parse(localStorage.getItem('DisableFlashVimPages')).indexOf(currentPage) != -1 : false,
     // Failed to read the 'localStorage' property from 'Window': The document is sandboxed and lacks the 'allow-same-origin' flag.
@@ -113,12 +114,31 @@ flashvim.updateInfoPanel = function(info ,type) {
     } catch (e) {}
     return this
 }
+/* findMaxScrollElement */
+flashvim.getMaxScrollElement = function() {
+  let maxHeight = -1
+  function findMaxScrollElement(element) {
+    if (element.scrollHeight > maxHeight + 100) {
+      maxHeight = element.scrollHeight;
+      maxScrollElement = element;
+    }
+
+    for (let i = 0; i < element.children.length; i++) {
+      findMaxScrollElement(element.children[i]);
+    }
+  }
+
+  findMaxScrollElement(document.documentElement);
+}
 
 flashvim.commandHandler = function(_type) {
     let that = this
     if (!this.cmd) {
         this.hideInfoPanel()
         return
+    }
+    if (!maxScrollElement) {
+      this.getMaxScrollElement()
     }
     if (_type === 'enter') {
         switch (this.cmd) {
@@ -258,9 +278,6 @@ flashvim.commandHandler = function(_type) {
             case ':help':
                 open('https://h.markbuild.com/flashvim.html#help')
                 break
-            case ':seo':
-                this.showSeoInfo()
-                break
             default:
                 if (this.cmd.match(/^:tabm\s[0-9]+$/)) {
                     try {
@@ -320,7 +337,7 @@ flashvim.commandHandler = function(_type) {
                 this.cmd = ''
                 return
             case 'gg': // Scroll to Top of the Page
-                window.scrollTo(0,0)
+                maxScrollElement.scrollTo(0, 0)
                 this.cmd = ''
                 return
             case 'gt': // Go to next tab
@@ -336,7 +353,7 @@ flashvim.commandHandler = function(_type) {
                 this.cmd = ''
                 return
             case 'G': // Scroll to Bottom of the Page
-                window.scrollTo(0, document.body.scrollHeight)
+                maxScrollElement.scrollTo(0, maxScrollElement.scrollHeight)
                 this.cmd = ''
                 return
             case 'b': // Hide or Show labels
@@ -347,20 +364,16 @@ flashvim.commandHandler = function(_type) {
                 }
                 this.cmd = ''
                 return
-            case 'h': // Scroll Left
-                window.scrollTo(document.documentElement.scrollLeft - window.screen.width/2, document.documentElement.scrollTop)
-                this.cmd = ''
-                return
             case 'j': // Scroll Down
-                window.scrollTo(document.documentElement.scrollLeft, document.documentElement.scrollTop + window.screen.height/2)
+                maxScrollElement.scrollTo(0, maxScrollElement.scrollTop + window.screen.height/2)
                 this.cmd = ''
                 return
             case 'k': // Scroll Up
-                window.scrollTo(document.documentElement.scrollLeft, document.documentElement.scrollTop - window.screen.height/2)
+                maxScrollElement.scrollTo(0, maxScrollElement.scrollTop - window.screen.height/2)
                 this.cmd = ''
                 return
-            case 'l': // Scroll Right
-                window.scrollTo(document.documentElement.scrollLeft + window.screen.width/2, document.documentElement.scrollTop)
+            case 'h':
+            case 'l':  
                 this.cmd = ''
                 return
             case 'x':
@@ -408,47 +421,6 @@ flashvim.commandHandler = function(_type) {
         }
     }
     that.timeout(4).then(_ =>{ that.cmd='';that.updateInfoPanel('')});
-}
-/* Get SEO info */
-flashvim.showSeoInfo = function() {
-    if (!$id('flashvim_seo_box')) { // iframe 不好控制高度
-        let newElem = document.createElement('div')
-        newElem.id = 'flashvim_seo_box'
-        document.body.appendChild(newElem)
-
-    } else {
-        return
-    }
-    document.querySelector('#flashvim_info').innerText=''
-    var title = document.title.replace(/(^[^-]+\s-\s)/,'')
-    var desc = document.head.querySelector("meta[name='description']") ? document.head.querySelector("meta[name='description']").content : ''
-    var canonical_url = document.head.querySelector('[rel="canonical"]') ? document.head.querySelector('[rel="canonical"]').href : '-'
-    var html ='<h1>SEO Information</h1>' +
-              '<h3>I. Title(' + title.length + '/60) & URL & meta description(' + desc.length + '/160)</h3><div class="serp-preview">' + 
-              '<div class="serp-title">' + title + '</div>' +
-              '<div class="serp-url">' + location.origin + location.pathname + '<span class="serp-arrow"></span></div>' +
-              '<div class="serp-description">' + desc + '</div></div>' +
-              '<p class="tip">1. According to <a href="https://moz.com/learn/seo/title-tag" target="_blank">Moz</a> , title tags that starts with a keyword tend to perform better than title tags with the keyword towards the end of the tag.</p>' +
-              '<p class="tip">[Primary Keyword] - [Secondary Keyword] | [Brand Name]</p>' +
-              '<p class="tip">[Product Name] - [Product Category] | [Brand Name]</p>' +
-              '<p class="tip">2. Don\'t overdo SEO keywords, such as: Buy Widgets, Best Widgets, Cheap Widgets, Widgets for Sale</p>' +
-              '<p class="tip">3. Give every page a unique title</p>'+
-              '<p class="tip">4. Google doesn\'t use the meta description tag as a direct ranking signal. However, your description tag can impact click-through-rate, which is a key ranking factor.</p>'+
-              '<h3>II. Canonical Url</h3>' + canonical_url + '</p>';
-    html += '<h3>III. h1</h3>';
-    qSA('h1').forEach(function(_elem){ html += '<p>'+_elem.innerText + '</p>'} );
-    html += '<h3>IV. h2</h3>';
-    qSA('h2').forEach(function(_elem){ html += '<p>'+_elem.innerText + '</p>'} );
-    var first100 = document.body.innerText.replace(/\n/g,' ').replace(/\s+/g,' ').split(' ').slice(0,100).join(' ')
-    html += '<h3>V. First 100 words</h3><p class="tip">Having a keyword appear in the first 100 words of a page’s content is correlated to first page Google rankings</p><p>' + first100 + '</p>';
-    html += '<h3>V. img alt</h3><table><tr><th>图片</th><th>alt</th><th>src</th></tr>';
-    qSA('img').forEach(function(_elem){ html += '<tr><td><img style="max-width:100px" src="' + _elem.src + '"></td><td>'+_elem.alt + '</td><td>'+_elem.src+'</td></tr>'} );
-    html += '<p class="tip">Alt text provide better image context/descriptions to search engine crawlers, helping them to index an image properly.</p>'
-    html += '</table><h3>VI. Anchor Text</h3><table><tr><th>href</th><th>title</th><th>Anchor Text</th><th>Parent Node innerText</th></tr>';
-    qSA('a').forEach(function(_elem){ if (_elem.href.startsWith('http')) { html += '<tr><td>' + _elem.href + '</td><td>' + _elem.title + '</td><td>' + _elem.innerText + '</td><td>' + _elem.parentElement.innerText + '</td></tr>'}} );
-    html += '</table>';
-    html += '<p class="tip">Use descriptive keywords in anchor text that reflect the same topic or keywords the target page is trying to target. It\'s not necessary to use the same keyword text every time—in fact, doing so can trigger spam detectors. Instead, strive for a variety of anchor text that enhances context and usability for your users—and for search engines, as well.</p>';
-    $id('flashvim_seo_box').innerHTML = html;
 }
 /* Get all the big images */
 flashvim.fetchImgList = function() {
@@ -521,7 +493,7 @@ flashvim.keydownHandler = function(event) {
         return
     }
     // Prev Page
-    if (event.keyCode === 37) { // Arrow Left
+    if (event.keyCode === 37 || event.keyCode === 72) { // Arrow Left or H
         var p = this.prevPatterns.split(',')
         qSA('a').forEach(elem => {
             if (elem.text && elem.href) {
@@ -536,7 +508,7 @@ flashvim.keydownHandler = function(event) {
         })
     }
     // Next Page
-    if (event.keyCode === 39) { // Arrow right 
+    if (event.keyCode === 39 || event.keyCode === 76) { // Arrow right or L 
         var p = this.nextPatterns.split(',')
         qSA('a').forEach(elem => {
             if (elem.text && elem.href) {
@@ -629,16 +601,14 @@ flashvim.runCustomScript = function() {
   } catch(e) {}
 }
 /*++++++++++++++++++++ Watcher +++++++++++++++++++++++*/
-Object.defineProperties(flashvim, {
-    cmd: {
-        configurable: true,
-        get: function() {
-            return cmd
-        },
-        set: function(newValue) {
-            cmd = newValue
-            this.commandHandler()
-        }
+Reflect.defineProperty(flashvim, "cmd", {
+    configurable: true,
+    get: function() {
+        return cmd
+    },
+    set: function(newValue) {
+        cmd = newValue
+        this.commandHandler()
     }
 })
 flashvim.cmd = ''
