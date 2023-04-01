@@ -35,9 +35,9 @@ const render_link_map_table = () => {
     var isString = typeof linkmap[Object.keys(linkmap)[0]] === 'string' // 兼容之前的字符串
     Object.keys(linkmap).sort().forEach(function(key) {
         if (isString) {
-            html+='<tr><td class="key"><input value="'+key+'" /></td><td class="link"><input value="'+linkmap[key]+'" /></td><td class="desc"><input value="" /></td><td><button class="remove">x</button></td></tr>'
+            html+='<tr><td class="key"><input value="'+key+'" /></td><td class="link"><input value="'+linkmap[key]+'" /></td><td class="desc"><input value="" /></td><td><button class="remove">×</button></td></tr>'
         } else {
-            html+='<tr><td class="key"><input value="'+key+'" /></td><td class="link"><input value="'+linkmap[key][0]+'" /></td><td class="desc"><input value="'+linkmap[key][1]+'" /></td><td><button class="remove">x</button></td></tr>'
+            html+='<tr><td class="key"><input value="'+key+'" /></td><td class="link"><input value="'+linkmap[key][0]+'" /></td><td class="desc"><input value="'+linkmap[key][1]+'" /></td><td><button class="remove">×</button></td></tr>'
         }
     })
 
@@ -51,7 +51,7 @@ const render_scriptset_table = () => {
     var html='<tr><th>URL Regexp</th><th>JavaScript Script</th><th>Description</th></tr>'
     console.log(scriptset)
     scriptset.forEach(function(item) {
-            html+='<tr><td class="urlReg"><input value="'+item[0]+'" /></td><td class="script"><textarea>'+item[1]+'</textarea></td><td class="desc"><input value="'+item[2]+'" /></td><td><button class="removescript">x</button></td></tr>'
+            html+='<tr><td class="urlReg"><input value="'+item[0]+'" /></td><td class="script"><textarea>'+item[1]+'</textarea></td><td class="desc"><input value="'+item[2]+'" /></td><td><button class="removescript">×</button></td></tr>'
     })
     document.getElementById("scriptsetedit").innerHTML=html
     for(let i = 0; i < document.getElementsByClassName("removescript").length; i++){
@@ -100,7 +100,7 @@ const loadfile = (event_this) => {
 const add_new_map = () => {
     let tr = document.createElement('tr')
     tr.className="new"
-    tr.innerHTML+='<td class="key"><input></td><td class="link"><input></td><td class="desc"><input></td><td><button class="remove">x</button></td>'
+    tr.innerHTML+='<td class="key"><input></td><td class="link"><input></td><td class="desc"><input></td><td><button class="remove">×</button></td>'
     document.getElementById("linkmapedit").appendChild(tr)
     for(let i = 0; i < document.getElementsByClassName("remove").length; i++){
         document.getElementsByClassName("remove")[i].addEventListener('click', (event) => { removecurrentline(event) }, false )
@@ -109,7 +109,7 @@ const add_new_map = () => {
 const add_new_scriptset = () => {
     let tr = document.createElement('tr')
     tr.className="new"
-    tr.innerHTML+='<td class="urlReg"><input></td><td class="script"><textarea></textarea></td><td class="desc"><input></td><td><button class="removescript">x</button></td>'
+    tr.innerHTML+='<td class="urlReg"><input></td><td class="script"><textarea></textarea></td><td class="desc"><input></td><td><button class="removescript">×</button></td>'
     document.getElementById("scriptsetedit").appendChild(tr)
     for(let i = 0; i < document.getElementsByClassName("removescript").length; i++) {
         document.getElementsByClassName("removescript")[i].addEventListener('click', (event) => { removecurrentline(event) }, false )

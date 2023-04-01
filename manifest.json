@@ -1,6 +1,6 @@
 ﻿{
 	"name": "FlashVim",
-	"version": "1.23.1",
+	"version": "1.23.4",
 	"manifest_version": 2,
 	"description":"Vim for Google Chrome and Firefox.",
 	"icons": {"48": "source/48.png"},
@@ -20,6 +20,6 @@
     "match_about_blank": true,
     "matches": [ "\u003Call_urls>" ],
 		"run_at":"document_start",
-		"css": ["source/mkstyles.css"]
+		"css": ["source/styles.css"]
 	}]
 }
