@@ -2,18 +2,44 @@ var linkmap = {}
 var patterns = {}
 var scriptset = []
 
-chrome.runtime.sendMessage({type:'getlinkmap'},function (response) {
-    linkmap = response
-    render_link_map_table()
-})
-chrome.runtime.sendMessage({type:'getscriptset'},function (response) {
-    scriptset = response
-    render_scriptset_table()
-})
+const port = chrome.runtime.connect({name: "option-page"});
+port.postMessage({ type: "getlinkmap" });
+port.postMessage({ type: "getscriptset" });
+port.postMessage({ type: "getpatterns" });
+port.postMessage({ type: 'getSynInfo' })
 
-chrome.runtime.sendMessage({type:'getpatterns'},function (response) {
-    patterns = response
-    render_patterns_table()
+port.onMessage.addListener(response => {
+    console.log(response)
+    switch(response.type) {
+      case 'getlinkmap':
+      case 'setlinkmap':
+          linkmap = response.linkmap
+          render_link_map_table()
+          break
+      case 'getscriptset':
+      case 'setscriptset':
+          scriptset = response.scriptset
+          render_scriptset_table()
+          break
+      case 'getpatterns':
+      case 'setpatterns':
+          patterns = response.patterns
+          render_patterns_table()
+          break
+      case 'savesyninfo':
+          if (response.success == 1) {
+              alert('Synchronized successful')
+          }
+          break
+      case 'getSynInfo':
+          if (response.success == 1) {
+              document.getElementById("synurl").value = response.synurl
+              document.getElementById("synusername").value = response.synusername
+              document.getElementById("synpassword").value = response.synpassword
+              document.getElementById("last_syn_time").innerText = '(Last sync time: ' + formatdate(1000 * response.syntime) + ')'
+          }
+          break
+    }
 })
 
 document.getElementById("add_new_map").addEventListener('click', (event) => { add_new_map() }, false )
@@ -32,13 +58,8 @@ document.getElementById("savesyninfo").addEventListener('click', (event) => {sav
 
 const render_link_map_table = () => {
     var html='<tr><th>Keyword</th><th>Link <i>(Variable: {$domain}, {$rootDomain}, {$url})</i></th><th>Description</th></tr>'
-    var isString = typeof linkmap[Object.keys(linkmap)[0]] === 'string' // 兼容之前的字符串
     Object.keys(linkmap).sort().forEach(function(key) {
-        if (isString) {
-            html+='<tr><td class="key"><input value="'+key+'" /></td><td class="link"><input value="'+linkmap[key]+'" /></td><td class="desc"><input value="" /></td><td><button class="remove">×</button></td></tr>'
-        } else {
-            html+='<tr><td class="key"><input value="'+key+'" /></td><td class="link"><input value="'+linkmap[key][0]+'" /></td><td class="desc"><input value="'+linkmap[key][1]+'" /></td><td><button class="remove">×</button></td></tr>'
-        }
+        html+='<tr><td class="key"><input value="'+key+'" /></td><td class="link"><input value="'+linkmap[key][0]+'" /></td><td class="desc"><input value="'+linkmap[key][1]+'" /></td><td><button class="remove">×</button></td></tr>'
     })
 
     document.getElementById("linkmapedit").innerHTML=html
@@ -49,7 +70,6 @@ const render_link_map_table = () => {
 }
 const render_scriptset_table = () => {
     var html='<tr><th>URL Regexp</th><th>JavaScript Script</th><th>Description</th></tr>'
-    console.log(scriptset)
     scriptset.forEach(function(item) {
             html+='<tr><td class="urlReg"><input value="'+item[0]+'" /></td><td class="script"><textarea>'+item[1]+'</textarea></td><td class="desc"><input value="'+item[2]+'" /></td><td><button class="removescript">×</button></td></tr>'
     })
@@ -79,23 +99,13 @@ const update_backup_link = () => {
 const loadfile = (event_this) => {
     var file = event_this.files[0]
     var reader = new FileReader()
+    reader.readAsText(file)
     reader.onload = function() {
         var options = JSON.parse(reader.result) 
-        chrome.runtime.sendMessage({type:'setlinkmap',linkmap:options.linkmap},function (response) {
-            linkmap = response
-            render_link_map_table()
-        })
-        chrome.runtime.sendMessage({type:'setscriptset',scriptset:options.scriptset},function (response) {
-            scriptset = response
-            render_scriptset_table()
-        })
-
-        chrome.runtime.sendMessage({type:'setpatterns',linkmap:options.patterns},function (response) {
-            patterns = response
-            render_patterns_table()
-        })
+        port.postMessage({type: 'setlinkmap', linkmap: options.linkmap })
+        port.postMessage({type: 'setscriptset', scriptset: options.scriptset})
+        port.postMessage({type: 'setpatterns', patterns: options.patterns})
     }
-    reader.readAsText(file)
 }
 const add_new_map = () => {
     let tr = document.createElement('tr')
@@ -142,9 +152,8 @@ const save_linkmap = () => {
     Object.keys(arr).sort().forEach(function(key) {
         linkmap[key] = arr[key]
     })
-    chrome.runtime.sendMessage({type:'setlinkmap', linkmap:linkmap},function (response) {
-        render_link_map_table()
-    })
+
+    port.postMessage({type: 'setlinkmap', linkmap: linkmap })
 }
 const save_scriptset = () => {
     var elems = document.getElementById("scriptsetedit").querySelectorAll("input,textarea")
@@ -159,9 +168,7 @@ const save_scriptset = () => {
             scriptset.push([elems[i-2].value, elems[i-1].value, elems[i].value])
         }
     }
-    chrome.runtime.sendMessage({type:'setscriptset', scriptset:scriptset},function (response) {
-        render_scriptset_table()
-    })
+    port.postMessage({type: 'setscriptset', scriptset: scriptset})
 }
 const reset_patterns = () => {
     render_patterns_table()
@@ -173,10 +180,8 @@ const save_patterns= () => {
         "search":document.getElementById("search_patterns").value.toLocaleLowerCase(),
         "save":document.getElementById("sav_patterns").value.toLocaleLowerCase()
     }
-    chrome.runtime.sendMessage({ type:'setpatterns', patterns:patterns },
-    function (response) {
-        render_patterns_table()
-    })
+
+    port.postMessage({type: 'setpatterns', patterns: patterns})
 }
 
 const savesyninfo = _=> {
@@ -184,11 +189,7 @@ const savesyninfo = _=> {
     var synusername = document.getElementById("synusername").value
     var synpassword = document.getElementById("synpassword").value
     if(synurl && synusername && synpassword) {
-        chrome.runtime.sendMessage({type:'saveSynInfo', synurl: synurl, synusername: synusername, synpassword: synpassword},function (response) {
-            if(response.success == 1){
-                alert('Synchronized successful')
-            }
-        })
+        port.postMessage({type: 'saveSynInfo', synurl, synusername, synpassword })
     } else {
         alert('Please put the URL, the Username and Password')
     }
@@ -208,12 +209,3 @@ function formatdate(_timestamp) {
     s = s > 9? s: "0"+s
     return y + '-' + m + '-' + d + ' ' + h + ':' + i + ':' + s
 }
-
-chrome.runtime.sendMessage({type:'getSynInfo'},function (response) {
-    if(response.success == 1) {
-        document.getElementById("synurl").value = response.synurl
-        document.getElementById("synusername").value = response.synusername
-        document.getElementById("synpassword").value = response.synpassword
-        document.getElementById("last_syn_time").innerText = '(Last sync time: ' + formatdate(1000 * response.syntime) + ')'
-    }
-})

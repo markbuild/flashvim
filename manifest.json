@@ -1,24 +1,26 @@
 ﻿{
 	"name": "FlashVim",
 	"version": "1.23.4",
-	"manifest_version": 2,
-	"description":"Vim for Google Chrome and Firefox.",
+	"manifest_version": 3,
+	"description":"Flashvim is a browser extension which provides keyboard shortcuts for navigation and control in the spirit of the Vim editor.",
 	"icons": {"48": "source/48.png"},
 
-	"permissions": [ "\u003Call_urls>", "activeTab" ],
+  "permissions": [ "tabs", "storage", "alarms"],
 
-	"browser_action": {
+	"action": {
 		"default_icon": "source/48.png",
     "default_title": "FlashVim"
 	},
 
-	"background": {"scripts": ["background.js"]},
+  "background": {
+    "service_worker": "background.js"
+  },
 
 	"content_scripts": [{
     "all_frames": true,
 		"js": ["content.js"],
     "match_about_blank": true,
-    "matches": [ "\u003Call_urls>" ],
+    "matches": [ "<all_urls>" ],
 		"run_at":"document_start",
 		"css": ["source/styles.css"]
 	}]

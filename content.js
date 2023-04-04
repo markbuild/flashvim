@@ -26,11 +26,30 @@ const flashvim = {
     clearTimeout: _ => { clearTimeout(this.tid) },
 }
 
-chrome.runtime.sendMessage({type:'getpatterns'}, response => { // 初始化上/下一页 搜索匹配
-    flashvim.prevPatterns = response.prev
-    flashvim.nextPatterns = response.next
-    flashvim.searchPatterns = response.search
-    flashvim.savePatterns = response.save
+const port2 = chrome.runtime.connect({name: "content-page"});
+port2.postMessage({ type: "getpatterns" });
+
+port2.onMessage.addListener(response => {
+    switch(response.type) {
+        case 'getpatterns': // 初始化上/下一页 搜索匹配
+            flashvim.prevPatterns = response.patterns.prev
+            flashvim.nextPatterns = response.patterns.next
+            flashvim.searchPatterns = response.patterns.search
+            flashvim.savePatterns = response.patterns.save
+            break
+        case 'getlink':
+            response.link != null ? open(response.link.replace('{$domain}', currentDomain).replace('{$rootDomain}', currentRootDomain).replace('{$url}', currentPage)) : 0
+            break
+        case 'getscriptset':
+            response.scriptset.forEach(function(item) {
+                if (new RegExp(item[0]).test(currentPage)) {
+                    //  eval 被禁 没法操作DOM 了 TODO 
+                    // eval(item[1])
+                    // const fn = new Function(item[1]); fn()
+                }
+            })
+            break
+    }
 })
 
 /***+++++++++++++++++++ Methods ++++++++++++++++++++++++++++***/
@@ -150,14 +169,16 @@ flashvim.commandHandler = function(_type) {
             case ':q': // Quit this tab, close tab
             case ';q': // Fault tolerance 
                 try {
-                    chrome.runtime.sendMessage({type:'closeCurrentTab'});break;
+                    port2.postMessage({ type: "closeCurrentTab" });
+                    break
                 } catch(e) {}
             case ':xa': // Close all tabs
             case ';xa': // Fault tolerance 
             case ':qa': // Close all tabs
             case ';qa': // Fault tolerance 
                 try {
-                    chrome.runtime.sendMessage({type:'closeAllTab'});break;
+                    port2.postMessage({ type: "closeAllTab" });
+                    break
                 } catch(e) {}
             case ":w": 
                 let saveBtns = qSA('input[type=submit], input[type=button],button')
@@ -281,17 +302,12 @@ flashvim.commandHandler = function(_type) {
             default:
                 if (this.cmd.match(/^:tabm\s[0-9]+$/)) {
                     try {
-                        chrome.runtime.sendMessage({type:'tabm', tabIndex:cmd.slice(5)})
+                        port2.postMessage({ type: "tabm", tabIndex:cmd.slice(5) });
                     } catch(e) {}
                 } else if (this.cmd.match(/^\.\w+$/)) { //If match the key of linkmap
                     try {
-                        chrome.runtime.sendMessage({
-                            type: 'getlink',
-                            cmd: this.cmd.slice(1)
-                        }, response => {
-                            response != null ? open(response.replace('{$domain}', currentDomain).replace('{$rootDomain}', currentRootDomain).replace('{$url}', currentPage)) : 0
-                            this.cmd = ''
-                        })
+                        port2.postMessage({ type: "getlink", cmd: this.cmd.slice(1) });
+                        this.cmd = ''
                     } catch(e) {}
                 } else if (this.cmd.match(/^'[A-z0-9\.\/\-]+$/)) {
                     open('http://'+cmd.slice(1))
@@ -342,13 +358,13 @@ flashvim.commandHandler = function(_type) {
                 return
             case 'gt': // Go to next tab
                 try {
-                    chrome.runtime.sendMessage({ type:'changetab', direction: 1 })
+                    port2.postMessage({ type: "changetab", direction: 1 });
                 } catch(e) {}
                 this.cmd = ''
                 return
             case 'gT': // Go to previous tab
                 try {
-                    chrome.runtime.sendMessage({ type:'changetab', direction: -1 })
+                    port2.postMessage({ type: "changetab", direction: -1 });
                 } catch(e) {}
                 this.cmd = ''
                 return
@@ -413,7 +429,7 @@ flashvim.commandHandler = function(_type) {
                     }
                 } else if (this.cmd.match(/^\d+gt$/)) { // Go to tab in position \d
                     try {
-                        chrome.runtime.sendMessage({ type:'changetab', num: this.cmd.slice(0,-2) })
+                        port2.postMessage({ type: "changetab", num: this.cmd.slice(0,-2) });
                     } catch(e) {}
                     this.cmd = ''
                 }
@@ -586,20 +602,6 @@ flashvim.mouseOverHandler = function(event) {
         console.log(event.pageX, event.pageY)
     }
 }
-/* Run Custom Script */
-flashvim.runCustomScript = function() {
-  try {
-    chrome.runtime.sendMessage({
-    type: 'getscriptset'
-  }, response => {
-      response.forEach(function(item) {
-        if (new RegExp(item[0]).test(currentPage)) {
-          eval(item[1])
-        }
-      })
-    })
-  } catch(e) {}
-}
 /*++++++++++++++++++++ Watcher +++++++++++++++++++++++*/
 Reflect.defineProperty(flashvim, "cmd", {
     configurable: true,
@@ -615,6 +617,9 @@ flashvim.cmd = ''
 
 /***+++++++++++++++++++ Event Listener ++++++++++++++++++++++++++++***/
 // https://stackoverflow.com/questions/12045440/difference-between-document-addeventlistener-and-window-addeventlistener
-document.addEventListener("DOMContentLoaded", _ => { flashvim.createInfoPanel();flashvim.runCustomScript() })
+document.addEventListener("DOMContentLoaded", _ => { 
+    flashvim.createInfoPanel();
+    port2.postMessage({ type: "getscriptset" });
+})
 document.addEventListener('keydown', event => { flashvim.keydownHandler(event) }, false)
 document.addEventListener('keyup', event => { flashvim.keyupHandler(event) }, false)
