@@ -1,4 +1,3 @@
-console.log('%cMore about FlashVim >> https://h.markbuild.com/flashvim.html', "color:#fff;background-image:linear-gradient(90deg, #3E6CD0,#C93856 130px, #444 130px);padding:2px;")
 if (navigator.userAgent.includes("Firefox")) { // 兼容Firefox
     chrome = browser
 }
@@ -120,7 +119,12 @@ flashvim.getMaxScrollElement = function() {
   function findMaxScrollElement(element) {
     if (element.scrollHeight > maxHeight + 100) {
       maxHeight = element.scrollHeight;
-      maxScrollElement = element;
+      var doctype = document.doctype
+      if (doctype && document.doctype.publicId.includes('HTML 4') && element.nodeName === 'HTML') {
+        maxScrollElement = document.querySelector('body')
+      } else {
+        maxScrollElement = element
+      }
     }
 
     for (let i = 0; i < element.children.length; i++) {
@@ -364,6 +368,14 @@ flashvim.commandHandler = function(_type) {
                 }
                 this.cmd = ''
                 return
+            case 'h':
+                this.prevPage()
+                this.cmd = ''
+                return
+            case 'l':
+                this.nextPage()
+                this.cmd = ''
+                return
             case 'j': // Scroll Down
                 maxScrollElement.scrollTo(0, maxScrollElement.scrollTop + window.screen.height/2)
                 this.cmd = ''
@@ -374,6 +386,9 @@ flashvim.commandHandler = function(_type) {
                 return
             case 'h':
             case 'l':  
+                this.cmd = ''
+                return
+            case 'w':
                 this.cmd = ''
                 return
             case 'x':
@@ -417,7 +432,9 @@ flashvim.commandHandler = function(_type) {
                     } catch(e) {}
                     this.cmd = ''
                 }
-                this.updateInfoPanel(this.cmd)
+                if ([':', '.', '\'', ';'].includes(this.cmd[0])) {
+                  this.updateInfoPanel(this.cmd)
+                }
         }
     }
     that.timeout(4).then(_ =>{ that.cmd='';that.updateInfoPanel('')});
@@ -476,7 +493,12 @@ flashvim.keyupHandler = function(event) {
         this.disable = !this.disable
     }
     if (this.disable) return
-    if ((lastkeycode == 17 && event.keyCode == 67) || (event.keyCode == 27)) { // Ctrl + C or ESC
+    if (
+      (event.ctrlKey && event.keyCode == 67) ||
+      (lastkeycode == 17 && event.keyCode == 67) ||
+      (event.ctrlKey && event.keyCode == 219) ||
+      (event.keyCode == 27)
+    ) { // Ctrl-C or Ctrl-[ or ESC
         this.cmd = ''
         this.hideInfoPanel()
         this.hideLabels()
@@ -493,37 +515,31 @@ flashvim.keydownHandler = function(event) {
         return
     }
     // Prev Page
-    if (event.keyCode === 37 || event.keyCode === 72) { // Arrow Left or H
-        var p = this.prevPatterns.split(',')
-        qSA('a').forEach(elem => {
-            if (elem.text && elem.href) {
-                for(var i in p) { 
-                    if (elem.text.toLocaleLowerCase().includes(p[i].trim())) {
-                        location.replace(elem.href)
-                        this.updateInfoPanel('Previous Page', 'success').timeout(2).then(_ =>{ this.hideInfoPanel() })
-                        return
-                    }
-                }
-            }
-        })
+    if (event.keyCode === 37) { // Arrow Left
+      this.prevPage()
+      return
     }
     // Next Page
-    if (event.keyCode === 39 || event.keyCode === 76) { // Arrow right or L 
-        var p = this.nextPatterns.split(',')
-        qSA('a').forEach(elem => {
-            if (elem.text && elem.href) {
-                for(var i in p) { 
-                    if (elem.text.toLocaleLowerCase().includes(p[i].trim())) {
-                        location.replace(elem.href)
-                        this.updateInfoPanel('Next Page', 'success').timeout(2).then(_ =>{ this.hideInfoPanel() })
-                        return
-                    }
-                }
-            }
-        })
+    if (event.keyCode === 39) { // Arrow right
+      this.nextPage()
+      return
     }
     var Shift = event.shiftKey
-    var Ctrl = event.ctrlKey
+    if (!this.cmd.match(/^(\.|:|;|'|\d|d$|g$)/)) {
+      this.cmd = ''
+    }
+    if (this.cmd.match(/^\d+$/) && event.keyCode != 71 && !(event.keyCode > 95 && event.keyCode <106) && !(event.keyCode > 47 && event.keyCode < 58 && !Shift)) {
+      this.cmd = ''
+    }
+    if (this.cmd.match(/^\d+g$/) && event.keyCode != 84) {
+      this.cmd = ''
+    }
+    if (this.cmd == 'd' && event.keyCode != 68) {
+      this.cmd = ''
+    }
+    if (this.cmd == 'g' && event.keyCode != 84 && event.keyCode != 71 && event.keyCode != 16) {
+      this.cmd = ''
+    }
     switch (event.keyCode) {
         case 16: return // Shift
         case 17: return // Ctrl
@@ -559,7 +575,7 @@ flashvim.keydownHandler = function(event) {
         case 56: Shift? this.cmd+='*':this.cmd+='8';break
         case 57: Shift? this.cmd+='(':this.cmd+='9';break
         case 59: // Firefox
-        case 186:Shift? this.cmd+=':':this.cmd+=';';break // Chrome
+        case 186:Shift? this.cmd=':':this.cmd+=';';break // Chrome
         case 61: // Firefox 
         case 187:Shift? this.cmd+='+':this.cmd+='=';break // Chrome
         case 188:Shift? this.cmd+='<':this.cmd+=',';break
@@ -573,7 +589,7 @@ flashvim.keydownHandler = function(event) {
         case 221:Shift? this.cmd+='}':this.cmd+=']';break;
         case 222:Shift? this.cmd+='"':this.cmd+='\'';break;
         default: {
-            if (Ctrl && event.keyCode === 85) { // Ctrl-U, Clear input
+            if (event.ctrlKey && event.keyCode === 85) { // Ctrl-U, Clear input
                 this.cmd = ''
             } else if (event.keyCode >=65 && event.keyCode <=90) { // A ~ Z
                 (this.capsLock != Shift) ? this.cmd += String.fromCharCode(event.keyCode) : this.cmd += String.fromCharCode(event.keyCode).toLowerCase() 
@@ -585,6 +601,34 @@ flashvim.mouseOverHandler = function(event) {
     if (0) {
         console.log(event.pageX, event.pageY)
     }
+}
+flashvim.prevPage = function () {
+  var p = this.prevPatterns.split(',')
+  qSA('a').forEach(elem => {
+    if (elem.text && elem.href) {
+      for(var i in p) { 
+        if (elem.text.toLocaleLowerCase().includes(p[i].trim())) {
+          location.replace(elem.href)
+          this.updateInfoPanel('Previous Page', 'success').timeout(2).then(_ =>{ this.hideInfoPanel() })
+          return
+        }
+      }
+    }
+  })
+}
+flashvim.nextPage = function () {
+  var p = this.nextPatterns.split(',')
+  qSA('a').forEach(elem => {
+    if (elem.text && elem.href) {
+      for(var i in p) { 
+        if (elem.text.toLocaleLowerCase().includes(p[i].trim())) {
+          location.replace(elem.href)
+          this.updateInfoPanel('Next Page', 'success').timeout(2).then(_ =>{ this.hideInfoPanel() })
+          return
+        }
+      }
+    }
+  })
 }
 /* Run Custom Script */
 flashvim.runCustomScript = function() {
