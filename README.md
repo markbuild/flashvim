@@ -1,13 +1,10 @@
 # Flashvim
-(Browser extension)Vim for Chrome and Firefox.
+(Browser extension)Vim for Chrome.
 Flashvim is a browser extension which provides keyboard shortcuts for navigation and control in the spirit of the Vim editor. 
 
 ## Learn More
 - https://h.markbuild.com/flashvim.html
 - https://www.youtube.com/embed/c-Jeg5Cn8co
-
-## Firefox addons
-https://addons.mozilla.org/en-US/firefox/addon/flashvim/
 
 ## Chrome Extension
 https://chrome.google.com/webstore/detail/flashvim/mllbopppdlnalgabmlhiinapidldpgag

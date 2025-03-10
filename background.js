@@ -1,155 +1,185 @@
-if (navigator.userAgent.includes("Firefox")) { // 兼容Firefox
-    chrome = browser;
-} 
-chrome.browserAction.onClicked.addListener(function(tab) {
-  chrome.tabs.create({ url: chrome.extension.getURL('options/index.html') });
-});
-chrome.runtime.onMessage.addListener((request,sender,sendResponse) => {
-    switch(request.type) {
-        case 'closeCurrentTab':
-            chrome.tabs.query({active: true, currentWindow: true}, tabs => {
-                const current = tabs[0]
-                chrome.tabs.remove(current.id) // Remove current tab
-            })
-            break
-        case 'closeAllTab':
-            chrome.tabs.query({}, tabs => {
-                for (let i = 0; i < tabs.length; i++) {
-                    chrome.tabs.remove(tabs[i].id)
-                }
-            });
-            break;
-        case 'tabm':
-            var _num = +request.tabIndex
-            chrome.tabs.query({active: true, currentWindow: true}, tabs => {
-                var current = tabs[0],
-                    currentTabId = current.id,
-                    currentIndex = current.index
-                if(currentIndex < _num) _num--
-                chrome.tabs.move(currentTabId, {index: _num })
-            })
-            break;
-        case 'changetab':
-            updateAllTabs()
-            var _index,_num,_direction
-            if (request.num) { 
-                _num = request.num
-            } else if(request.direction) {
-                _direction= request.direction
-            }
-            chrome.tabs.query({active: true, currentWindow: true}, tabs => {
-                var current = tabs[0],
-                    tabId = current.id,
-                    currentIndex = current.index
-                chrome.tabs.query({currentWindow: true}, tabs => {
-                    if(_num) 
-                        _index = _num-1
-                    else
-                        _index = (currentIndex +_direction) % tabs.length;
-                    chrome.tabs.query({index: _index}, function(tabs){
-                        if (tabs.length) {
-                            var tabToActivate = tabs[0],
-                                tabToActivate_Id = tabToActivate.id
-                            chrome.tabs.update(tabToActivate_Id, { active: true })
-                        }
-                    });
-                });
-            });
-            break;
-        case 'getlink':
-            var v = getlinkmap()
-            typeof v === 'object' ?  sendResponse(getlinkmap()[request.cmd][0]) : sendResponse(getlinkmap()[request.cmd]) // 兼容之前的字符串
-            break;
-        case 'getlinkmap':
-            sendResponse(getlinkmap())
-            break;
-        case 'setlinkmap':
-            if (!request.linkmap) return false
-            localStorage.setItem('linkmap', JSON.stringify(request.linkmap));
-            sendResponse(JSON.parse(localStorage.getItem('linkmap')));
-            if(localStorage.getItem('synurl')){ // 异步任务
-                sync_write();
-            }
-            break;
-        case 'getscriptset':
-            sendResponse(getscriptset())
-            break;
-        case 'setscriptset':
-            if (!request.scriptset) return false
-            localStorage.setItem('scriptset', JSON.stringify(request.scriptset));
-            sendResponse(JSON.parse(localStorage.getItem('scriptset')));
-            if(localStorage.getItem('synurl')){ // 异步任务
-                sync_write();
-            }
-            break;
-        case 'getpatterns':
-            sendResponse(getpatterns())
-            break;
-        case 'setpatterns':
-            if (!request.patterns) return false
-            localStorage.setItem('patterns', JSON.stringify(request.patterns))
-            sendResponse(JSON.parse(localStorage.getItem('patterns')))
-            if(localStorage.getItem('synurl')) { // 异步任务
-                sync_write();
-            }
-            break;
-        case 'saveSynInfo':
-            const doSomethingWith = async () => {
-                return await sync_read((_res) => {
-                    localStorage.setItem('linkmap', JSON.stringify(_res.linkmap))
-                    localStorage.setItem('scriptset', JSON.stringify(_res.scriptset))
-                    localStorage.setItem('patterns', JSON.stringify(_res.patterns))
-                })
-            }
-            let synurl = request.synurl
-            let synusername = request.synusername
-            let synpassword = request.synpassword
-            localStorage.setItem('synurl', synurl)
-            localStorage.setItem('synusername', synusername)
-            localStorage.setItem('synpassword', synpassword)
-            localStorage.setItem('syntime', parseInt(new Date().getTime()/1000))
-            doSomethingWith().then(sendResponse({success: 1}))
-            break;
-        case 'getSynInfo':
-            if(localStorage.getItem('synurl')){
-                sendResponse({success: 1, synurl: localStorage.getItem('synurl'), synusername: localStorage.getItem('synusername'), synpassword: localStorage.getItem('synpassword'), syntime: localStorage.getItem('syntime')})
-            } else {
-                sendResponse({success: 0 })
-            }
-            break
-
-    }
+chrome.action.onClicked.addListener(function(tab) {
+  chrome.tabs.create({ url: chrome.runtime.getURL('options/index.html') })
 })
 
-const getlinkmap = () => {
-    if(!localStorage.getItem('linkmap')) { // Init Setting
-        localStorage.setItem('linkmap', JSON.stringify({
-            "gh":["https://github.com", ""],
-            "gg":["https://www.google.com/", ""],
-            "tt":["https://twitter.com/", ""],
-            "fv":["https://h.markbuild.com/flashvim.html", ""],
-            "w3v": ["https://validator.w3.org/nu/?doc={$url}", ""]
-        }))
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  switch(request.type) {
+    case 'closeCurrentTab':
+      chrome.tabs.query({active: true, currentWindow: true}, tabs => {
+        const current = tabs[0]
+        chrome.tabs.remove(current.id) // Remove current tab
+      })
+      break
+    case 'closeAllTab':
+      chrome.tabs.query({}, tabs => {
+        for (let i = 0; i < tabs.length; i++) {
+          chrome.tabs.remove(tabs[i].id)
+        }
+      })
+      break
+    case 'tabm':
+      let tabIndex = +request.tabIndex
+      chrome.tabs.query({active: true, currentWindow: true}, tabs => {
+        let current = tabs[0],
+        currentTabId = current.id,
+        currentIndex = current.index
+        if (currentIndex < tabIndex) tabIndex--
+        chrome.tabs.move(currentTabId, {index: tabIndex })
+      })
+      break
+    case 'changetab':
+      updateAllTabs()
+      let _index, _num, _direction
+      if (request.num) { 
+        _num = request.num
+      } else if(request.direction) {
+        _direction= request.direction
+      }
+      chrome.tabs.query({active: true, currentWindow: true}, tabs => {
+        let current = tabs[0],
+        tabId = current.id,
+        currentIndex = current.index
+        chrome.tabs.query({currentWindow: true}, tabs => {
+          if (_num) {
+            _index = _num - 1
+          } else {
+            _index = (currentIndex +_direction) % tabs.length;
+          }
+          chrome.tabs.query({index: _index}, function(tabs){
+            if (tabs.length) {
+              let tabToActivate = tabs[0],
+              tabToActivate_Id = tabToActivate.id
+              chrome.tabs.update(tabToActivate_Id, { active: true })
+            }
+          })
+        })
+      })
+      break;
+    case 'getlink':
+      getlinkmap().then(result => {
+        typeof result === 'object' ?  sendResponse(result[request.cmd][0]) : sendResponse(result[request.cmd]) // 兼容之前的字符串
+      })
+            return true;
+        case 'getlinkmap':
+          getlinkmap().then(result => {
+            sendResponse(result)
+          })
+           return true
+        case 'setlinkmap': // todo
+            chrome.storage.local.set({ linkmap: request.linkmap }).then()
+            chrome.storage.local.get(['synurl']).then(response => {
+              if (response.synurl) {
+                sync_write();
+              }
+            })
+            sendResponse()
+            break;
+        case 'getscriptset':
+          getscriptset().then(result => {
+            sendResponse(result)
+          })
+          return true
+        case 'setscriptset': // todo
+            chrome.storage.local.set({ scriptset: request.scriptset }).then(sendResponse)
+            chrome.storage.local.get(['synurl']).then(response => {
+              if (response.synurl) {
+                sync_write();
+              }
+            })
+            break;
+        case 'getpatterns':
+            getpatterns().then(result => {
+              sendResponse(result)
+            })
+            return true
+        case 'setpatterns': // todo
+            chrome.storage.local.set({ patterns: request.patterns}).then(sendResponse)
+            chrome.storage.local.get(['synurl']).then(response => {
+              if (response.synurl) {
+                sync_write();
+              }
+            })
+
+            break;
+        case 'saveSynInfo':
+            chrome.storage.local.set({ 
+              synurl: request.synurl,
+              synusername: request.synusername,
+              synpassword: request.synpassword,
+              syntime: Math.round(Date.now() / 1000) 
+            }).then(() => { // todo
+              sendResponse({success: 1})
+              sync_read((_res) => {
+                chrome.storage.local.set({ 
+                  linkmap: _res.linkmap,
+                  scriptset: _res.scriptset,
+                  patterns: request.patterns
+                }).then()
+              })
+            })
+            break;
+        case 'getSynInfo':
+          chrome.storage.local.get(['synusername', 'synpassword', 'synurl', 'syntime']).then(response => {
+            if (response.synurl) {
+              let { synusername, synpassword, synurl, syntime } = response
+              sendResponse({ // todo
+                success: 1,
+                synurl,
+                synusername,
+                synpassword,
+                syntime
+              })
+            } else {
+              sendResponse({success: 0 })
+            }
+          })
+          break
+
     }
-    return JSON.parse(localStorage.getItem('linkmap'))
+    return
+})
+
+const getlinkmap = async () => {
+  let { linkmap } = await chrome.storage.local.get(['linkmap'])
+  if (!linkmap) {
+    linkmap = {
+      "gh":["https://github.com", ""],
+      "gg":["https://www.google.com/", ""],
+      "tt":["https://twitter.com/", ""],
+      "fv":["https://h.markbuild.com/flashvim.html", ""],
+      "w3v": ["https://validator.w3.org/nu/?doc={$url}", ""]
+    }
+    chrome.storage.local.set({
+      linkmap
+    }).then()
+  }
+  return linkmap
 }
-const getscriptset = () => {
-    if(!localStorage.getItem('scriptset')) { // Init Setting
-        localStorage.setItem('scriptset', JSON.stringify([]))
-    }
-    return JSON.parse(localStorage.getItem('scriptset'))
+const getscriptset = async () => {
+  let { scriptset } = await chrome.storage.local.get(['scriptset'])
+  if (!scriptset) {
+    scriptset = []
+    chrome.storage.local.set({
+      scriptset
+    }).then()
+  }
+  return scriptset
 }
 
-const getpatterns = () => {
-    if(!localStorage.getItem('patterns')) { // Init Setting
-        localStorage.setItem('patterns', JSON.stringify({
-            "prev":"prev, <, ‹, ←, «, <<, 上一页, 前页",
-            "next":"next, >, ›, →, », >>, 下一页, 后页",
-            "search":"search, kw, keyword, 搜索",
-            "save":"save, update, 保存"
-        }));
+const getpatterns = async () => {
+  let { patterns } = await chrome.storage.local.get(['patterns'])
+  if (!patterns) {
+    patterns = { 
+      "prev":"prev, <, ‹, ←, «, <<, 上一页, 前页",
+      "next":"next, >, ›, →, », >>, 下一页, 后页",
+      "search":"search, kw, keyword, 搜索",
+      "save":"save, update, 保存"
     }
-    return JSON.parse(localStorage.getItem('patterns'))
+    chrome.storage.local.set({
+      patterns 
+    }).then()
+  }
+  return patterns
 }
 
 var Base64 = {
@@ -158,50 +188,46 @@ var Base64 = {
     }
 }
 
-const sync_read = _callback => {
-    let username = localStorage.getItem('synusername');
-    let password = localStorage.getItem('synpassword');
-    let url = localStorage.getItem('synurl');
-    let auth_header = 'Basic ' + Base64.encode(username + ':' +password);
-    fetch(url, {
-        method: 'GET',
-        headers: new Headers({
-            "Authorization": auth_header
-        }),
-        credentials: "same-origin"
-    }).then(response => response.json()).then(myJson => {
-        _callback(myJson);
-    }).catch(error => console.log(error));
+const sync_read = async _callback => {
+  let { synusername, synpassword, synurl } = await chrome.storage.local.get(['synusername', 'synpassword', 'synurl'])
+  let auth_header = 'Basic ' + Base64.encode(synusername + ':' +synpassword);
+  fetch(synurl, {
+    method: 'GET',
+    headers: new Headers({
+      "Authorization": auth_header
+    }),
+    credentials: "same-origin"
+  }).then(response => response.json()).then(myJson => {
+    _callback(myJson);
+  }).catch(error => console.log(error));
 }
-const sync_write = _=> {
-    let linkmap = JSON.parse(localStorage.getItem('linkmap'))
-    let scriptset = JSON.parse(localStorage.getItem('scriptset'))
-    let patterns = JSON.parse(localStorage.getItem('patterns'))
-    let str = JSON.stringify({linkmap: linkmap, scriptset: scriptset, patterns: patterns});
-    let username = localStorage.getItem('synusername');
-    let password = localStorage.getItem('synpassword');
-    let url = localStorage.getItem('synurl');
-    let auth_header = 'Basic ' + Base64.encode(username + ':' +password);
-    fetch(url, {
-        method: 'PUT',
-        body: str,
-        headers: new Headers({
-            "Authorization": auth_header
-        }),
-        credentials: "same-origin"
-    }).then(response => {})
+const sync_write = async () => {
+  let { linkmap, scriptset, patterns, synusername, synpassword, synurl } = await chrome.storage.local.get(['linkmap', 'scriptset', 'patterns', 'synusername', 'synpassword', 'synurl'])
+  let str = JSON.stringify({linkmap: linkmap, scriptset: scriptset, patterns: patterns});
+  let auth_header = 'Basic ' + Base64.encode(synusername + ':' +synpassword);
+  fetch(synurl, {
+    method: 'PUT',
+    body: str,
+    headers: new Headers({
+      "Authorization": auth_header
+    }),
+    credentials: "same-origin"
+  }).then(response => {})
 }
-setInterval(function () {
-    if(localStorage.getItem('synurl')) {
-        var time = parseInt(new Date().getTime()/1000)
-        var last_syn_time = localStorage.getItem('syntime')
-        if(time - last_syn_time > 300){ // Synchronisation interval: 5 minutes
-            sync_read(function(_res) {
-                localStorage.setItem('linkmap', JSON.stringify(_res.linkmap))
-                localStorage.setItem('scriptset', JSON.stringify(_res.scriptset))
-                localStorage.setItem('patterns', JSON.stringify(_res.patterns))
-                localStorage.setItem('syntime', parseInt(new Date().getTime()/1000))
-            })
-        }
+
+setInterval(async () => {
+  let { syntime, synurl } = await chrome.storage.local.get(['syntime', 'synurl'])
+  if (synurl) {
+    var time = parseInt(new Date().getTime()/1000)
+    if (time - syntime > 300) { // Synchronisation interval: 5 minutes
+      sync_read((_res) => {
+        chrome.storage.local.set({
+          linkmap: _res.linkmap,
+          scriptset: _res.scriptset,
+          patterns: _res.patterns,
+          syntime: parseInt(new Date().getTime()/1000)
+        }).then()
+      })
     }
-},60000); // 1 minutes
+  }
+}, 60000); // 1 minutes

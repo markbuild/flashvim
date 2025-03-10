@@ -1,7 +1,3 @@
-if (navigator.userAgent.includes("Firefox")) { // 兼容Firefox
-    chrome = browser
-}
-
 /***+++++++++++++++++++ Data init  ++++++++++++++++++++++++++++***/
 const $id = _id => document.getElementById(_id)
 const qSA = _s => document.querySelectorAll(_s)
@@ -25,7 +21,7 @@ const flashvim = {
     clearTimeout: _ => { clearTimeout(this.tid) },
 }
 
-chrome.runtime.sendMessage({type:'getpatterns'}, response => { // 初始化上/下一页 搜索匹配
+chrome.runtime.sendMessage({ type:'getpatterns' }).then(response => { // 初始化上/下一页 搜索匹配
     flashvim.prevPatterns = response.prev
     flashvim.nextPatterns = response.next
     flashvim.searchPatterns = response.search
@@ -285,14 +281,15 @@ flashvim.commandHandler = function(_type) {
             default:
                 if (this.cmd.match(/^:tabm\s[0-9]+$/)) {
                     try {
-                        chrome.runtime.sendMessage({type:'tabm', tabIndex:cmd.slice(5)})
+                        chrome.runtime.sendMessage({type:'tabm', tabIndex:cmd.slice(5)});
                     } catch(e) {}
                 } else if (this.cmd.match(/^\.\w+$/)) { //If match the key of linkmap
                     try {
                         chrome.runtime.sendMessage({
                             type: 'getlink',
                             cmd: this.cmd.slice(1)
-                        }, response => {
+                        }).then(response => {
+                          console.log(response, 292)
                             response != null ? open(response.replace('{$domain}', currentDomain).replace('{$rootDomain}', currentRootDomain).replace('{$url}', currentPage)) : 0
                             this.cmd = ''
                         })
@@ -346,13 +343,13 @@ flashvim.commandHandler = function(_type) {
                 return
             case 'gt': // Go to next tab
                 try {
-                    chrome.runtime.sendMessage({ type:'changetab', direction: 1 })
+                    chrome.runtime.sendMessage({ type:'changetab', direction: 1 });
                 } catch(e) {}
                 this.cmd = ''
                 return
             case 'gT': // Go to previous tab
                 try {
-                    chrome.runtime.sendMessage({ type:'changetab', direction: -1 })
+                    chrome.runtime.sendMessage({ type:'changetab', direction: -1 });
                 } catch(e) {}
                 this.cmd = ''
                 return
@@ -428,7 +425,7 @@ flashvim.commandHandler = function(_type) {
                     }
                 } else if (this.cmd.match(/^\d+gt$/)) { // Go to tab in position \d
                     try {
-                        chrome.runtime.sendMessage({ type:'changetab', num: this.cmd.slice(0,-2) })
+                        chrome.runtime.sendMessage({ type:'changetab', num: this.cmd.slice(0,-2) });
                     } catch(e) {}
                     this.cmd = ''
                 }
@@ -633,9 +630,7 @@ flashvim.nextPage = function () {
 /* Run Custom Script */
 flashvim.runCustomScript = function() {
   try {
-    chrome.runtime.sendMessage({
-    type: 'getscriptset'
-  }, response => {
+    chrome.runtime.sendMessage({ type: 'getscriptset' }).then(response => {
       response.forEach(function(item) {
         if (new RegExp(item[0]).test(currentPage)) {
           eval(item[1])

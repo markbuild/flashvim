@@ -1,25 +1,30 @@
 ﻿{
+	"manifest_version": 3,
+	"action": {
+		"default_icon": "source/48.png",
+		"default_title": "FlashVim"
+	},
+	"background": {
+		"service_worker": "background.js"
+	},
+	"host_permissions": [
+		"<all_urls>"
+	],
 	"name": "FlashVim",
-	"version": "1.23.4",
-	"manifest_version": 2,
-	"description":"Vim for Google Chrome and Firefox.",
+	"version": "1.24.11",
+	"description": "Vim for Google Chrome.",
 	"icons": {"48": "source/48.png"},
 
-	"permissions": [ "\u003Call_urls>", "activeTab" ],
+	"permissions": ["activeTab", "storage", "alarms"],
 
-	"browser_action": {
-		"default_icon": "source/48.png",
-    "default_title": "FlashVim"
-	},
-
-	"background": {"scripts": ["background.js"]},
-
-	"content_scripts": [{
-    "all_frames": true,
-		"js": ["content.js"],
-    "match_about_blank": true,
-    "matches": [ "\u003Call_urls>" ],
-		"run_at":"document_start",
-		"css": ["source/styles.css"]
-	}]
+	"content_scripts": [
+		{
+			"all_frames": true,
+			"js": ["content.js"],
+			"match_about_blank": true,
+			"matches": [ "<all_urls>" ],
+			"run_at":"document_start",
+			"css": ["source/styles.css"]
+		}
+	]
 }
