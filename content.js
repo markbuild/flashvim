@@ -289,7 +289,6 @@ flashvim.commandHandler = function(_type) {
                             type: 'getlink',
                             cmd: this.cmd.slice(1)
                         }).then(response => {
-                          console.log(response, 292)
                             response != null ? open(response.replace('{$domain}', currentDomain).replace('{$rootDomain}', currentRootDomain).replace('{$url}', currentPage)) : 0
                             this.cmd = ''
                         })
@@ -633,7 +632,7 @@ flashvim.runCustomScript = function() {
     chrome.runtime.sendMessage({ type: 'getscriptset' }).then(response => {
       response.forEach(function(item) {
         if (new RegExp(item[0]).test(currentPage)) {
-          eval(item[1])
+          setTimeout(item[1])
         }
       })
     })

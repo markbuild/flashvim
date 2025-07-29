@@ -4,12 +4,10 @@ var scriptset = []
 
 chrome.runtime.sendMessage({ type: 'getlinkmap' }).then(response => {
   linkmap = response
-  console.log(linkmap, 7)
   render_link_map_table()
 })
 chrome.runtime.sendMessage({ type: 'getscriptset' }).then(response => {
   scriptset = response
-  console.log(scriptset, 12)
   render_scriptset_table()
 })
 
@@ -82,17 +80,16 @@ const loadfile = (event_this) => {
     var reader = new FileReader()
     reader.onload = function() {
         var options = JSON.parse(reader.result) 
-        console.log(options)
-        chrome.runtime.sendMessage({ type:'setlinkmap', linkmap: options.linkmap }, () => {
+        chrome.runtime.sendMessage({ type:'setlinkmap', linkmap: options.linkmap }).then(() => {
             linkmap = options.linkmap
             render_link_map_table()
         })
-        chrome.runtime.sendMessage({ type:'setscriptset', scriptset: options.scriptset }, () => {
+        chrome.runtime.sendMessage({ type:'setscriptset', scriptset: options.scriptset }).then(() => {
             scriptset = options.scriptset
             render_scriptset_table()
         })
 
-        chrome.runtime.sendMessage({ type:'setpatterns', patterns: options.patterns }, () => {
+        chrome.runtime.sendMessage({ type:'setpatterns', patterns: options.patterns }).then(() => {
             patterns = options.patterns
             render_patterns_table()
         })
@@ -144,7 +141,7 @@ const save_linkmap = () => {
     Object.keys(arr).sort().forEach(function(key) {
         linkmap[key] = arr[key]
     })
-    chrome.runtime.sendMessage({ type:'setlinkmap', linkmap:linkmap }, () => {
+    chrome.runtime.sendMessage({ type:'setlinkmap', linkmap:linkmap }).then(() => {
         render_link_map_table()
     })
 }
@@ -161,7 +158,7 @@ const save_scriptset = () => {
             scriptset.push([elems[i-2].value, elems[i-1].value, elems[i].value])
         }
     }
-    chrome.runtime.sendMessage({ type:'setscriptset', scriptset:scriptset }, () => {
+    chrome.runtime.sendMessage({ type:'setscriptset', scriptset:scriptset }).then(() => {
         render_scriptset_table()
     })
 }
@@ -175,7 +172,7 @@ const save_patterns= () => {
         "search":document.getElementById("search_patterns").value.toLocaleLowerCase(),
         "save":document.getElementById("sav_patterns").value.toLocaleLowerCase()
     }
-    chrome.runtime.sendMessage({ type:'setpatterns', patterns:patterns }, () => {
+    chrome.runtime.sendMessage({ type:'setpatterns', patterns:patterns }).then(() => {
         render_patterns_table()
     })
 }
@@ -185,7 +182,7 @@ const savesyninfo = _=> {
     var synusername = document.getElementById("synusername").value
     var synpassword = document.getElementById("synpassword").value
     if(synurl && synusername && synpassword) {
-        chrome.runtime.sendMessage({ type:'saveSynInfo', synurl: synurl, synusername: synusername, synpassword: synpassword }, response => {
+        chrome.runtime.sendMessage({ type:'saveSynInfo', synurl: synurl, synusername: synusername, synpassword: synpassword }).then(response => {
             if(response.success == 1){
                 alert('Synchronized successful')
             }
@@ -210,7 +207,7 @@ function formatdate(_timestamp) {
     return y + '-' + m + '-' + d + ' ' + h + ':' + i + ':' + s
 }
 
-chrome.runtime.sendMessage({ type:'getSynInfo' }, response => {
+chrome.runtime.sendMessage({ type:'getSynInfo' }).then(response => {
     if(response.success == 1) {
         document.getElementById("synurl").value = response.synurl
         document.getElementById("synusername").value = response.synusername

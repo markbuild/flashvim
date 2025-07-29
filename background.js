@@ -28,7 +28,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       })
       break
     case 'changetab':
-      updateAllTabs()
       let _index, _num, _direction
       if (request.num) { 
         _num = request.num
@@ -65,7 +64,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             sendResponse(result)
           })
            return true
-        case 'setlinkmap': // todo
+        case 'setlinkmap':
             chrome.storage.local.set({ linkmap: request.linkmap }).then()
             chrome.storage.local.get(['synurl']).then(response => {
               if (response.synurl) {
@@ -79,7 +78,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             sendResponse(result)
           })
           return true
-        case 'setscriptset': // todo
+        case 'setscriptset':
             chrome.storage.local.set({ scriptset: request.scriptset }).then(sendResponse)
             chrome.storage.local.get(['synurl']).then(response => {
               if (response.synurl) {
@@ -92,7 +91,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
               sendResponse(result)
             })
             return true
-        case 'setpatterns': // todo
+        case 'setpatterns':
             chrome.storage.local.set({ patterns: request.patterns}).then(sendResponse)
             chrome.storage.local.get(['synurl']).then(response => {
               if (response.synurl) {
@@ -107,7 +106,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
               synusername: request.synusername,
               synpassword: request.synpassword,
               syntime: Math.round(Date.now() / 1000) 
-            }).then(() => { // todo
+            }).then(() => {
               sendResponse({success: 1})
               sync_read((_res) => {
                 chrome.storage.local.set({ 
@@ -122,7 +121,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           chrome.storage.local.get(['synusername', 'synpassword', 'synurl', 'syntime']).then(response => {
             if (response.synurl) {
               let { synusername, synpassword, synurl, syntime } = response
-              sendResponse({ // todo
+              sendResponse({
                 success: 1,
                 synurl,
                 synusername,
@@ -136,7 +135,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           break
 
     }
-    return
+    return true
 })
 
 const getlinkmap = async () => {
