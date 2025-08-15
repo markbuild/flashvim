@@ -283,7 +283,7 @@ flashvim.commandHandler = function(_type) {
                     try {
                         chrome.runtime.sendMessage({type:'tabm', tabIndex:cmd.slice(5)});
                     } catch(e) {}
-                } else if (this.cmd.match(/^\.\w+$/)) { //If match the key of linkmap
+                } else if (this.cmd.match(/^\.(\w|\/)+$/)) { //If match the key of linkmap
                     try {
                         chrome.runtime.sendMessage({
                             type: 'getlink',
