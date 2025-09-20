@@ -10,7 +10,6 @@ const flashvim = {
     disable: self == top && localStorage.getItem('DisableFlashVimPages') ? JSON.parse(localStorage.getItem('DisableFlashVimPages')).indexOf(currentPage) != -1 : false,
     // Failed to read the 'localStorage' property from 'Window': The document is sandboxed and lacks the 'allow-same-origin' flag.
     isCreateLabels: false, // 是否创建了链接/表单Label
-    isShowLabels: false, // 是否显示链接/表单Label
     capsLock: false, // 大小写锁
     prevPatterns: '',
     nextPatterns: '',
@@ -43,33 +42,25 @@ function convert26(num){
 }
 flashvim.createLabels = function() { // 创建链接/表单Label
     this.isCreateLabels = true
-    this.isShowLabels = true
     qSA('a, input, textarea, select, button').forEach((elem, index) => {
         if (elem.type == 'hidden') return true
-        if (elem.tagName === 'A' && !elem.innerHTML) return true
         let newElem = document.createElement('span')
         index = convert26(index + 1)
         newElem.id = 'flashvim_label' + index
         newElem.className = 'flashvim_label'
         newElem.innerHTML = index
-        if (elem.tagName === 'A') {
-            elem.insertBefore(newElem, elem.childNodes[0])
-        } else {
+        if (['TEXTAREA', 'INPUT', 'SELECT'].includes(elem.tagName)) {
             elem.parentElement.insertBefore(newElem, elem)
+        } else if (elem.childNodes) {
+            elem.insertBefore(newElem, elem.childNodes[0])
         }
     })
 }
-flashvim.showLabels = function() {
-    this.isShowLabels = true
+flashvim.removeLabels = function() {
     qSA('.flashvim_label').forEach(elem => {
-        elem.style.opacity = 1
+      elem.remove()
     })
-}
-flashvim.hideLabels = function() {
-    this.isShowLabels = false
-    qSA('.flashvim_label').forEach(elem => {
-        elem.style.opacity = 0
-    })
+    this.isCreateLabels = false
 }
 /* Create Information Panel */
 flashvim.createInfoPanel = function() {
@@ -330,12 +321,6 @@ flashvim.commandHandler = function(_type) {
                 event.preventDefault()
                 this.cmd = ''
                 return
-            case 'dd':
-                try{
-                    document.getSelection().getRangeAt(0).commonAncestorContainer.remove()
-                } catch (e) {}
-                this.cmd = ''
-                return
             case 'gg': // Scroll to Top of the Page
                 maxScrollElement.scrollTo(0, 0)
                 this.cmd = ''
@@ -360,7 +345,7 @@ flashvim.commandHandler = function(_type) {
                 if (!this.isCreateLabels) {
                     this.createLabels()
                 } else {
-                    this.showLabels()
+                    this.removeLabels()
                 }
                 this.cmd = ''
                 return
@@ -395,33 +380,22 @@ flashvim.commandHandler = function(_type) {
                 return
             default:
  
-                if (this.cmd.match(/^\.[a-z]+\'$/)) { // [o]pen the link which label ID is \d in a new tab
+                if (this.cmd.match(/^\.[a-z]+;$/)) { // click the link or button which label ID is \d in a new tab
                     var elem = $id('flashvim_label' + this.cmd.slice(1,-1))
                     this.cmd=''
                     if (!elem) {
+                      this.removeLabels()
                       return
                     }
-                    open(elem.parentElement.href)
-                    elem.style.opacity = 0 // Hide aim label
-                } else if (this.cmd.match(/^\.[a-z]+;$/)) { // [c]lick the link or button which label ID is \d
-                    var elem = $id('flashvim_label' + this.cmd.slice(1,-1))
-                    this.cmd=''
-                    if (!elem) {
-                      return
-                    }
-                    if (elem.parentElement.href) {
+                    if (['TEXTAREA', 'INPUT', 'SELECT'].includes(elem.nextElementSibling?.tagName)) {
+                      let target = elem.nextElementSibling
+                      setTimeout(() => {
+                        target.focus()
+                      }, 100)
+                    } else if (elem.parentElement) {
                       elem.parentElement.click()
-                    } else if (elem.nextElementSibling) {
-                      target = elem.nextElementSibling
-                        if (target.type === 'submit' || target.tagName === 'BUTTON') {
-                          target.click()
-                        } else {
-                          setTimeout(function() {
-                              target.focus()
-                              }, 100)
-                        }
-                      elem.style.opacity = 0 // Hide aim label
                     }
+                    this.removeLabels()
                 } else if (this.cmd.match(/^\d+gt$/)) { // Go to tab in position \d
                     try {
                         chrome.runtime.sendMessage({ type:'changetab', num: this.cmd.slice(0,-2) });
@@ -497,7 +471,7 @@ flashvim.keyupHandler = function(event) {
     ) { // Ctrl-C or Ctrl-[ or ESC
         this.cmd = ''
         this.hideInfoPanel()
-        this.hideLabels()
+        this.removeLabels()
         event.target.blur()
         document.body.blur()
     }
@@ -592,6 +566,7 @@ flashvim.keydownHandler = function(event) {
             } 
         }
     }
+    return true
 }
 flashvim.mouseOverHandler = function(event) {
     if (0) {
@@ -654,5 +629,13 @@ flashvim.cmd = ''
 /***+++++++++++++++++++ Event Listener ++++++++++++++++++++++++++++***/
 // https://stackoverflow.com/questions/12045440/difference-between-document-addeventlistener-and-window-addeventlistener
 document.addEventListener("DOMContentLoaded", _ => { flashvim.createInfoPanel();flashvim.runCustomScript() })
-document.addEventListener('keydown', event => { flashvim.keydownHandler(event) }, false)
-document.addEventListener('keyup', event => { flashvim.keyupHandler(event) }, false)
+document.addEventListener('keydown', event => {
+  if (flashvim.keydownHandler(event)) {
+    event.stopImmediatePropagation()
+  }
+}, true)
+document.addEventListener('keyup', event => {
+  if(flashvim.keyupHandler(event)) {
+    event.stopImmediatePropagation()
+  }
+}, false)
