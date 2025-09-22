@@ -638,4 +638,4 @@ document.addEventListener('keyup', event => {
   if(flashvim.keyupHandler(event)) {
     event.stopImmediatePropagation()
   }
-}, false)
+}, true)
